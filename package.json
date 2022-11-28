@@ -1,0 +1,22 @@
+{
+  "name": "Crowdfund",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "dev": "lite-server",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ganache": "ganache -p 7545 --chain.chainId 5777 --chain.networkId 5777"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  },
+  "dependencies": {
+    "web3": "^1.2.2"
+  }
+}
