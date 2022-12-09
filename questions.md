@@ -39,3 +39,8 @@ remix easier
 xiana does the explanation in person (overview of the app), aldan does the demo from his laptop
 
 rating syste, to evaluate the quality of the notes
+
+
+
+# Other questions
+1. Do we want to admit refunds? e.g., let the renter see 10% of the file and request a refund if they don't like it? Another example: the renter could look at the size of the file, the format...

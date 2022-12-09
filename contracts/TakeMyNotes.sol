@@ -1,3 +1,4 @@
+/*
 pragma solidity >=0.4.22 <0.6.0;
 
 contract TakeMyNotes {
@@ -12,10 +13,9 @@ contract TakeMyNotes {
 
     classNotesOwnership[] public classNotesOwnerships;
 
-    /**
-     * Sets the owner of the notes to the address of the message sender
-     * @param id The ID of the notes
-     */
+
+    // Sets the owner of the notes to the address of the message sender
+    // @param id The ID of the notes
     function addClassNotes(string id, uint16 price) public {
         classNotesOwnership[id] = ClassNotesOwnership(msg.sender, price, true);
     }
@@ -47,3 +47,4 @@ contract TakeMyNotes {
     }
 
 }
+*/
