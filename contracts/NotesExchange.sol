@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.7.0;
 
 contract NotesExchange {
     uint public notesValue;                 // The amount of money that the renter has to pay

@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.7.0;
 
 import "truffle/Assert.sol"; // Truffle support for assertions
 import "truffle/DeployedAddresses.sol"; // Truffle support for getting contract addresses

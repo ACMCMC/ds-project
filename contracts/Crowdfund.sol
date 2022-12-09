@@ -1,6 +1,5 @@
-/*
-pragma solidity ^0.5.0;
-
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.7.0;
 contract Crowdfund {
     
     mapping(address => uint) pledges;
@@ -29,4 +28,3 @@ contract Crowdfund {
         return sum >= goal;
     }
 }
-*/
