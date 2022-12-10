@@ -1,22 +1,55 @@
 {
-  "name": "Crowdfund",
+  "name": "notes_exchange",
   "version": "1.0.0",
-  "description": "",
+  "description": "A decentralized application for buying and selling notes",
   "main": "truffle.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
     "dev": "lite-server",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "ganache": "ganache -p 7545 --chain.chainId 5777 --chain.networkId 5777"
+    "ganache": "ganache -p 7545 --chain.chainId 5777 --chain.networkId 5777",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Xiana Carrera; Aldan Creo",
+  "license": "All rights reserved",
   "devDependencies": {
     "lite-server": "^2.6.1"
   },
   "dependencies": {
-    "web3": "^1.2.2"
+    "web3": "^1.2.2",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.7",
+    "@types/react": "^18.0.26",
+    "@types/react-dom": "^18.0.9",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "typescript": "^4.9.4",
+    "web-vitals": "^2.1.4"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

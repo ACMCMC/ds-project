@@ -1,4 +1,4 @@
-# UniSwap
+# NotesExchange
 
 ## Authors
 * Aldán Creo Mariño
@@ -7,7 +7,7 @@ This app was developed as a course project for Distributed Systems, a master's i
 
 ## Your go-to tool for buying and selling class notes
 
-UniSwap is a decentralized web application based on the Ethereum blockchain that allows students to buy and sell class notes.
+NotesExchange is a decentralized web application based on the Ethereum blockchain that allows students to buy and sell class notes.
 
 Sudents make money by selling their notes, and their peers save money by buying notes from other students.
 
