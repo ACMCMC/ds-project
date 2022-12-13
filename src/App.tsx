@@ -3,9 +3,17 @@ import Web3 from 'web3';
 import logo from './logo.svg';
 import './App.css';
 import { NotesList } from './NotesList';
+import { AbiItem } from 'web3-utils';
+import { Contract } from 'web3-eth-contract/types/index';
+
+import { NOTES_EXCHANGE_ADDRESS, NOTES_EXCHANGE_ABI } from './contract-abi';
+import { Note } from './Note';
 
 type AppState = {
-  account: string
+  account: string,
+  notes: Note[],
+  notesCount: number,
+  notesExchange?: Contract
 }
 
 class App extends Component<any, AppState> {
@@ -17,11 +25,22 @@ class App extends Component<any, AppState> {
     const web3 = new Web3(Web3.givenProvider || "http://localhost:8545")
     const accounts = await web3.eth.getAccounts()
     this.setState({ account: accounts[0] })
+    const notesExchange = new Contract(NOTES_EXCHANGE_ABI as AbiItem[], NOTES_EXCHANGE_ADDRESS);
+    this.setState({ notesExchange })
+    const notesCount: number = await notesExchange.methods.;
+    this.setState({ notesCount })
+    for (var i = 1; i <= notesCount; i++) {
+      const note = await notesExchange.methods.note(i).call()
+      this.setState({
+        notes: [...this.state.notes, note]
+      })
+    }
+
   }
 
   constructor(props: any) {
     super(props)
-    this.state = { account: '' }
+    this.state = { account: '', notes: [], notesCount: 0, notesExchange: undefined }
   }
 
   render() {
@@ -79,7 +98,7 @@ class App extends Component<any, AppState> {
         {/* Image Showcases */}
         <section className="showcase">
           <div className="container-fluid p-0">
-            <NotesList notes={[{ uuid: 'abc123', title: 'Note 1', description: 'Description 1', price: 12.9, owner: '0x1', buyer: [] }, { uuid: 'abc123', title: 'Note 2', description: 'def', price: 12.9, owner: '0x1', buyer: [] }, { uuid: 'abc123', title: 'Note 3', description: 'def', price: 12.9, owner: '0x1', buyer: [] }, { uuid: 'abc123', title: 'Note 4', description: 'def', price: 12.9, owner: '0x1', buyer: [] }]} />
+            <NotesList notes={this.state.notes} />
           </div>
         </section>
         {/* Testimonials */}
