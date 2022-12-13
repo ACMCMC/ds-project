@@ -8,12 +8,14 @@
   },
   "scripts": {
     "ganache": "ganache -p 7545 --chain.chainId 5777 --chain.networkId 5777",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "compile-contract": "truffle compile",
-    "migrate-contract": "truffle migrate"
+    "migrate-contract": "truffle migrate",
+    "truffle-console": "truffle console",
+    "truffle-deploy": "truffle compile && truffle migrate"
   },
   "author": "Xiana Carrera; Aldan Creo",
   "license": "All rights reserved",
@@ -31,7 +33,9 @@
     "react-scripts": "5.0.1",
     "typescript": "^4.9.4",
     "web-vitals": "^2.1.4",
-    "web3": "^1.2.2"
+    "web3": "^1.2.2",
+    "web3-eth-contract": "^1.8.1",
+    "webpack": "^5.75.0"
   },
   "eslintConfig": {
     "extends": [
@@ -50,5 +54,17 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "assert": "^2.0.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
+    "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
+    "process": "^0.11.10",
+    "react-app-rewired": "^2.2.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.0"
   }
 }

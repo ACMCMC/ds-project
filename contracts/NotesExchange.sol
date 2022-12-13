@@ -3,8 +3,8 @@ pragma solidity ^0.8.9;
 
 contract NotesExchange {
     address payable public owner; // The address of the owner of the contract
-    mapping(uint256 => Notes) public notesList;
-    uint256 private notesTotalCount; // The number of notes available in the market
+    mapping(uint256 => Notes) private notesList;
+    uint256 private notesTotalCount = 0; // The number of notes available in the market
 
     enum State {
         Pending,
@@ -300,5 +300,32 @@ contract NotesExchange {
             }
         }
         return myNotes;
+    }
+
+    function getNotesCount() public view returns (uint256) {
+        return notesTotalCount;
+    }
+
+    function getNote(uint256 notesId)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            address,
+            address,
+            State,
+            bytes32
+        )
+    {
+        Notes memory notes = notesList[notesId];
+        return (
+            notes.id,
+            notes.notesValue,
+            notes.noteTaker,
+            notes.renter,
+            notes.transactionState,
+            notes.notesHash
+        );
     }
 }

@@ -1,13 +1,14 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import Web3 from 'web3';
-import logo from './logo.svg';
-import './App.css';
-import { NotesList } from './NotesList';
+import { Contract } from 'web3-eth-contract';
 import { AbiItem } from 'web3-utils';
-import { Contract } from 'web3-eth-contract/types/index';
-
-import { NOTES_EXCHANGE_ADDRESS, NOTES_EXCHANGE_ABI } from './contract-abi';
+import './App.css';
+import logo from './logo.svg';
 import { Note } from './Note';
+import { NotesList } from './NotesList';
+import truffleFile from './NotesExchange.json';
+
+const NOTES_EXCHANGE_ADDRESS = 'FILL_ME';
 
 type AppState = {
   account: string,
@@ -25,17 +26,16 @@ class App extends Component<any, AppState> {
     const web3 = new Web3(Web3.givenProvider || "http://localhost:8545")
     const accounts = await web3.eth.getAccounts()
     this.setState({ account: accounts[0] })
-    const notesExchange = new Contract(NOTES_EXCHANGE_ABI as AbiItem[], NOTES_EXCHANGE_ADDRESS);
+    const notesExchange = new Contract(truffleFile.abi as AbiItem[], NOTES_EXCHANGE_ADDRESS);
     this.setState({ notesExchange })
-    const notesCount: number = await notesExchange.methods.;
+    const notesCount: number = await notesExchange.methods.getNotesCount().call();
     this.setState({ notesCount })
     for (var i = 1; i <= notesCount; i++) {
-      const note = await notesExchange.methods.note(i).call()
+      const note = await notesExchange.methods.getNote(i).call()
       this.setState({
         notes: [...this.state.notes, note]
       })
     }
-
   }
 
   constructor(props: any) {
