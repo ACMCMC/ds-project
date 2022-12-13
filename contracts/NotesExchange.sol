@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.0;
+pragma solidity ^0.8.9;
 
 contract NotesExchange {
     address payable public owner; // The address of the owner of the contract
-    mapping(uint256 => notes) public notesList;
+    mapping(uint256 => Notes) public notesList;
     uint256 private notesTotalCount; // The number of notes available in the market
 
     enum State {
@@ -14,7 +14,7 @@ contract NotesExchange {
         Aborted
     } // Possible states for the transaction
 
-    struct notes {
+    struct Notes {
         uint256 id; // Or use the hash?
         uint256 notesValue;
         address payable noteTaker;
@@ -74,7 +74,7 @@ contract NotesExchange {
     );
 
     // Modifier that checks if the caller is the noteTaker
-    modifier onlyNoteTaker(int256 notesId) {
+    modifier onlyNoteTaker(uint256 notesId) {
         Notes storage notes = notesList[notesId];
         require(
             msg.sender == notes.noteTaker,
@@ -84,7 +84,7 @@ contract NotesExchange {
     }
 
     // Modifier that checks if the caller is the renter
-    modifier onlyRenter(int256 notesId) {
+    modifier onlyRenter(uint256 notesId) {
         Notes storage notes = notesList[notesId];
         require(
             msg.sender == notes.renter,
@@ -94,9 +94,9 @@ contract NotesExchange {
     }
 
     // Modifier that checks if the transaction is in the state passed as argument
-    modifier inState(int256 notesId, State expectedState) {
+    modifier inState(uint256 notesId, State expectedState) {
         Notes storage notes = notesList[notesId];
-        require(notes.state == expectedState, "Invalid state");
+        require(notes.transactionState == expectedState, "Invalid state");
         _;
     }
 
@@ -115,7 +115,7 @@ contract NotesExchange {
         address payable renter = payable(msg.sender);
         // transfer the notes (don't know how to do this yet)
         notes.forBuy = false;
-        soldNotesCount++;
+        //soldNotesCount++; // TODO: check if this is necessary
 
         payable(notes.noteTaker).transfer(notes.notesValue);
         renter.transfer(msg.value - notes.notesValue);
@@ -127,28 +127,29 @@ contract NotesExchange {
         );
     }
 
-    function publishNotesForSale(uint256 notesId, uint256 price) {
+    function publishNotesForSale(uint256 notesId, uint256 price) public {
         require(price > 0, "The price must be greater than 0");
 
-        Notes storage newNotes;
-        notes.forBuy = true;
-        notes.notesValue = price;
-        notes.noteTaker = payable(msg.sender);
-        notes.renter = payable(address(this));
-        notes.id = notesCount;
-        notesCount++;
+        Notes memory newNotes;
+        newNotes.forBuy = true;
+        newNotes.notesValue = price;
+        newNotes.noteTaker = payable(msg.sender);
+        newNotes.renter = payable(address(this));
+        newNotes.id = notesTotalCount;
+        notesTotalCount++;
 
         // Add the notes to the list of notes
-        notesList[notesCount] = newNotes;
+        notesList[notesTotalCount] = newNotes;
         emit NotesPublishedForSale(
-            notes.id,
-            notes.notesValue,
-            notes.noteTaker,
-            notes.renter
+            newNotes.id,
+            newNotes.notesValue,
+            newNotes.noteTaker,
+            newNotes.renter
         );
     }
 
     function publishNotesForRenting(uint256 notesId, uint256 notesValue)
+        public
         payable
     {
         require(msg.value > 0, "The value of the notes must be greater than 0");
@@ -157,26 +158,26 @@ contract NotesExchange {
             "The deposit must be double the notes value"
         );
 
-        Notes storage newNotes;
-        notes.forBuy = false;
-        notes.notesValue = msg.value / 2;
-        notes.noteTaker = payable(msg.sender);
-        notes.renter = payable(address(this));
-        notes.id = notesCount;
-        notesCount++;
+        Notes memory newNotes;
+        newNotes.forBuy = false;
+        newNotes.notesValue = msg.value / 2;
+        newNotes.noteTaker = payable(msg.sender);
+        newNotes.renter = payable(address(this));
+        newNotes.id = notesTotalCount;
+        notesTotalCount++;
 
         // Add the notes to the list of notes
-        notesList[notesCount] = newNotes;
+        notesList[notesTotalCount] = newNotes;
         emit NotesPublishedForRenting(
-            notes.id,
-            notes.notesValue,
-            notes.noteTaker,
-            notes.renter
+            newNotes.id,
+            newNotes.notesValue,
+            newNotes.noteTaker,
+            newNotes.renter
         );
     }
 
     // The noteTaker can abort a transaction until a renter has confirmed it
-    function abortNoteTaking(int256 notesId)
+    function abortNoteTaking(uint256 notesId)
         public
         onlyNoteTaker(notesId)
         inState(notesId, State.Pending)
@@ -185,13 +186,13 @@ contract NotesExchange {
 
         emit Aborted(notes.id, notes.notesValue, notes.noteTaker, notes.renter);
         // To prevent a re-entrancy attack, the state is changed before sending the money
-        notes.state = State.Aborted;
+        notes.transactionState = State.Aborted;
 
-        noteTaker.transfer(notes.value * 2); // Return the deposit money to the noteTaker
+        notes.noteTaker.transfer(notes.notesValue * 2); // Return the deposit money to the noteTaker
     }
 
     // Register an address as the renter, store its deposit and change the state of the transaction
-    function rentNotes(int256 notesId)
+    function rentNotes(uint256 notesId)
         public
         payable
         inState(notesId, State.Pending)
@@ -204,36 +205,36 @@ contract NotesExchange {
             notes.noteTaker,
             notes.renter
         );
-        notes.state = State.Established;
+        notes.transactionState = State.Established;
         notes.renter = payable(msg.sender);
     }
 
     // The noteTaker can submit the notes, proving that he has taken them
-    function sumbitProofOfNotesTaken(int256 notesId, bytes32 _notesHash)
+    function sumbitProofOfNotesTaken(uint256 notesId, bytes32 _notesHash)
         public
         onlyNoteTaker(notesId)
         inState(notesId, State.Established)
     {
         Notes storage notes = notesList[notesId];
-        notes.state = State.WaitingClaim;
-        notes.notesHAsh = _notesHash;
+        notes.transactionState = State.WaitingClaim;
+        notes.notesHash = _notesHash;
     }
 
     // The renter can abort the transaction when the notes were submitted if he wants a refund
-    function requestRefund()
+    function requestRefund(uint256 notesId, bytes32 _notesHash)
         public
-        onlyRenter
+        onlyRenter(notesId)
         inState(notesId, State.WaitingClaim)
     {
         Notes storage notes = notesList[notesId];
         emit Aborted(notes.id, notes.notesValue, notes.noteTaker, notes.renter);
-        notes.state = State.Aborted;
-        notes.renter.transfer(2 * notesValue);
-        notes.noteTaker.transfer(2 * notesValue);
+        notes.transactionState = State.Aborted;
+        notes.renter.transfer(2 * notes.notesValue);
+        notes.noteTaker.transfer(2 * notes.notesValue);
     }
 
     // The renter can confirm that he has received the notes to retrieve half of the deposit and pay the noteTaker
-    function confirmNotesReceived()
+    function confirmNotesReceived(uint256 notesId)
         public
         onlyRenter(notesId)
         inState(notesId, State.WaitingClaim)
@@ -246,9 +247,9 @@ contract NotesExchange {
             notes.renter
         );
         // To prevent a re-entrancy attack, the state is changed before sending the money
-        notes.state = State.Completed;
-        notes.noteTaker.transfer(3 * notesValue);
-        notes.renter.transfer(notesValue);
+        notes.transactionState = State.Completed;
+        notes.noteTaker.transfer(3 * notes.notesValue);
+        notes.renter.transfer(notes.notesValue);
     }
 
     // Get the balance of the contract
@@ -257,7 +258,8 @@ contract NotesExchange {
     }
 
     function getAllNotesOnSale() public view returns (Notes[] memory) {
-        Notes[] memory notesOnSale = new Notes[](notesCount - NotesSold);
+        //Notes[] memory notesOnSale = new Notes[](notesTotalCount - NotesSold); // Do we want to keep track of the notes sold?
+        Notes[] memory notesOnSale = new Notes[](notesTotalCount);
         uint256 idx = 0;
         for (uint256 i = 0; i < notesTotalCount; i++) {
             if (notesList[i].forBuy) {
