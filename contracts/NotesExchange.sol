@@ -18,6 +18,7 @@ contract NotesExchange {
         uint256 id; // Or use the hash?
         uint256 notesValue;
         address payable noteTaker;
+        address payable delegate;
         address payable renter;
         bool forBuy;
         State transactionState; // The current state of the transaction. Default value: Pending
@@ -127,7 +128,7 @@ contract NotesExchange {
         );
     }
 
-    function publishNotesForSale(uint256 notesId, uint256 price) public {
+    function publishNotesForSale(uint256 price) public {
         require(price > 0, "The price must be greater than 0");
 
         Notes memory newNotes;
@@ -148,7 +149,7 @@ contract NotesExchange {
         );
     }
 
-    function publishNotesForRenting(uint256 notesId, uint256 notesValue)
+    function publishNotesForRenting()
         public
         payable
     {
@@ -221,7 +222,7 @@ contract NotesExchange {
     }
 
     // The renter can abort the transaction when the notes were submitted if he wants a refund
-    function requestRefund(uint256 notesId, bytes32 _notesHash)
+    function requestRefund(uint256 notesId)
         public
         onlyRenter(notesId)
         inState(notesId, State.WaitingClaim)
