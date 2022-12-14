@@ -22,7 +22,7 @@ export class NotesList extends Component<NotesListProps> {
     }
 
     return (this.props.notes.map((note, key) =>
-      <div className="row g-0 border rounded m-5 p-5">
+      <div className="row g-0 border rounded m-5 p-5" key={key}>
         <div className="d-flex col-lg-4 order-lg-1">
           <img src={noteIcon} className="mx-auto my-auto" alt="Icon of a note" />
         </div>
