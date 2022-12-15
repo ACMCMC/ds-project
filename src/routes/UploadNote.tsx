@@ -6,6 +6,7 @@ import { Note } from "../Note";
 export default function UploadNote() {
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [price, setPrice] = useState<number>(0.0);
   const [notes, setNotes] = useStore<Note[]>('notes');
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
@@ -16,8 +17,8 @@ export default function UploadNote() {
   }
 
   return (
-    <div className="container-flex align-items-center">
-      <form className="p-5 col-12 col-md-6" onSubmit={e => { handleSubmit(e) }}>
+    <div className="container-fluid align-items-center">
+      <form className="p-5 col-12 col-md-6 mx-auto" onSubmit={e => { handleSubmit(e) }}>
         <div className="my-3">
           <label htmlFor="name" className="form-label">Name</label>
           <input type="text" className="form-control" id="name" aria-describedby="nameHelp" onChange={e => setName(e.target.value)} value={name} />
@@ -29,10 +30,18 @@ export default function UploadNote() {
           <div id="descriptionHelp" className="form-text">The summary of the notes.</div>
         </div>
         <div className="my-3">
-          <label htmlFor="description" className="form-label">Description</label>
+          <label htmlFor="price" className="form-label">Price</label>
           <div className="input-group">
             <span className="input-group-text">ETH</span>
-            <input type="text" className="form-control" aria-label="Amount (to the nearest ETH)" />
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              className="form-control"
+              id="price"
+              aria-label="Amount (to the nearest ETH)"
+              onChange={e => setPrice(e.target.valueAsNumber)}
+              value={price} />
           </div>
           <div id="priceHelp" className="form-text">The price of the notes.</div>
         </div>
