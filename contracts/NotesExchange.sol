@@ -2,27 +2,29 @@
 pragma solidity ^0.8.9;
 
 contract NotesExchange {
-    address payable public owner; // The address of the owner of the contract
-    mapping(uint256 => Notes) private notesList;
-    uint256 private notesTotalCount = 0; // The number of notes available in the market
+    address payable public owner;                           // The address of the owner of the contract (manager of the system)
+    mapping(uint256 => Notes) private notesList;            // The list of all notes that exist
+    uint256 private notesTotalCount = 0;                    // The total number of notes that exist
 
-    enum State {
-        Pending,
-        Established,
-        WaitingClaim,
-        Completed,
-        Aborted
-    } // Possible states for the transaction
+    /* Possible states for a renting transaction:
+    *   - Pending: The note taking offer has been created by the noteTaker, but has no renter yet.
+    *   - Aborted: The note taking offer has been aborted by the noteTaker while it was pending.
+    *   - Established: The note taking offer has been accepted by the renter.
+    *   - WaitingClaim: The note taking offer has been completed by the noteTaker, but the renter has not claimed the notes yet.
+    *   - Completed: The note taking offer has been completed by the noteTaker and the renter has claimed the notes.
+    * A buy/sell transaction does not use states. Instead, it is indicated by the forBuy attribute.
+    */
+    enum State { Pending, Established, WaitingClaim, Completed, Aborted } 
 
     struct Notes {
-        uint256 id; // Or use the hash?
-        uint256 notesValue;
-        address payable noteTaker;
-        address payable renter;
-        bool forBuy;
-        State transactionState; // The current state of the transaction. Default value: Pending
-        bytes32 notesHash;
-    }
+        uint256 id;                           // Or use the hash?
+        uint256 notesValue;                   // The value of the notes. The deposit for a renting transaction is twice the value of the notes.
+        address payable noteTaker;            // The address of the note taker
+        address payable renter;               // The address of the renter
+        bool forBuy;                          // Indicates if the notes are for sale or for renting 
+        State transactionState;               // The current state of the renting transaction. Default value: Pending
+        bytes32 notesHash;                    // The hash of the notes
+    }   
 
     /* To rent the notes, both renter and noteTaker have to deposit twice the value of the notes.
        When the transaction is completed, the noteTaker will receive 3 times the value of the notes.
@@ -31,7 +33,7 @@ contract NotesExchange {
     */
 
     // Events to keep a record of the transaction
-    event NotesSold(
+    event NotesSold(            
         uint256 notesId,
         uint256 notesValue,
         address payable noteTaker,
@@ -100,10 +102,11 @@ contract NotesExchange {
         _;
     }
 
-    constructor() {
+    constructor() {         // Establish the owner of the contract
         owner = payable(msg.sender);
     }
 
+    // Function to buy notes that were published for sale
     function buyNotes(uint256 notesId) public payable {
         Notes storage notes = notesList[notesId];
         require(notes.forBuy, "The notes are not for sale");
@@ -117,8 +120,12 @@ contract NotesExchange {
         notes.forBuy = false;
         //soldNotesCount++; // TODO: check if this is necessary
 
+        // To avoid reentrancy attacks, the transfer of the money is done last
+
         payable(notes.noteTaker).transfer(notes.notesValue);
         renter.transfer(msg.value - notes.notesValue);
+
+        // Register the transaction through an event
         emit NotesSold(
             notes.id,
             notes.notesValue,
@@ -127,9 +134,11 @@ contract NotesExchange {
         );
     }
 
-    function publishNotesForSale(uint256 notesId, uint256 price) public {
+    // Function to publish already taken notes for sale
+    function publishNotesForSale(uint256 price) public {
         require(price > 0, "The price must be greater than 0");
 
+        // Initialize a new notes struct
         Notes memory newNotes;
         newNotes.forBuy = true;
         newNotes.notesValue = price;
@@ -148,7 +157,8 @@ contract NotesExchange {
         );
     }
 
-    function publishNotesForRenting(uint256 notesId, uint256 notesValue)
+    // Function to publish a renting offer to take notes in the future
+    function publishNotesForRenting()
         public
         payable
     {
@@ -158,6 +168,7 @@ contract NotesExchange {
             "The deposit must be double the notes value"
         );
 
+        // Initialize a new notes struct
         Notes memory newNotes;
         newNotes.forBuy = false;
         newNotes.notesValue = msg.value / 2;
@@ -176,7 +187,7 @@ contract NotesExchange {
         );
     }
 
-    // The noteTaker can abort a transaction until a renter has confirmed it
+    // Function to abort a renting offer. The noteTaker can abort while no renter has not accepted the offer.
     function abortNoteTaking(uint256 notesId)
         public
         onlyNoteTaker(notesId)
@@ -221,7 +232,7 @@ contract NotesExchange {
     }
 
     // The renter can abort the transaction when the notes were submitted if he wants a refund
-    function requestRefund(uint256 notesId, bytes32 _notesHash)
+    function requestRefund(uint256 notesId)
         public
         onlyRenter(notesId)
         inState(notesId, State.WaitingClaim)
@@ -257,6 +268,7 @@ contract NotesExchange {
         return address(this).balance;
     }
 
+    // Get all notes that are currently marked as being forBuy
     function getAllNotesOnSale() public view returns (Notes[] memory) {
         //Notes[] memory notesOnSale = new Notes[](notesTotalCount - NotesSold); // Do we want to keep track of the notes sold?
         Notes[] memory notesOnSale = new Notes[](notesTotalCount);
@@ -270,6 +282,7 @@ contract NotesExchange {
         return notesOnSale;
     }
 
+    // Get all notes that are owned by the caller
     function getMyNotes() public view returns (Notes[] memory) {
         uint256 myNotesCount = 0;
         for (uint256 i = 0; i < notesTotalCount; i++) {
@@ -289,6 +302,7 @@ contract NotesExchange {
         return myNotes;
     }
 
+    // Get all notes that are owned by the caller and are for sale
     function getMyNotesOnSale() public view returns (Notes[] memory) {
         uint256 myNotesCount = 0;
         Notes[] memory myNotes = new Notes[](myNotesCount);
@@ -302,10 +316,12 @@ contract NotesExchange {
         return myNotes;
     }
 
+    // Get the total number of notes
     function getNotesCount() public view returns (uint256) {
         return notesTotalCount;
     }
 
+    // Get the details of a note
     function getNote(uint256 notesId)
         public
         view
