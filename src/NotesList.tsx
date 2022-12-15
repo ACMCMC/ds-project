@@ -16,7 +16,7 @@ export class NotesList extends Component<NotesListProps> {
         </div>
         <div className="col-lg-8 order-lg-2 my-auto showcase-text">
           <h2>No notes found</h2>
-          <p className="lead mb-0">There are no notes available for sale at the moment. Please check back later.</p>
+          <p className="lead mb-0">We haven't found any notes. Please check back later.</p>
         </div>
       </div>
     }

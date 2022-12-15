@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "react-context-hook";
 import { Navigate } from "react-router";
+import { Contract } from "web3-eth-contract";
 import { Note } from "../Note";
 
 export default function RequestService() {
@@ -10,9 +11,11 @@ export default function RequestService() {
   const [day, setDay] = useState<number>(1);
   const [month, setMonth] = useState<number>(1);
   const [year, setYear] = useState<number>(2022);
+  const [notesExchange] = useStore<Contract>('notesExchange');
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
+    //notesExchange?.methods.requestService(name, otherAccount, price, day, month, year).send({ from: '
   }
 
   return (

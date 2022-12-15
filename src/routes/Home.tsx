@@ -3,6 +3,7 @@ import { NotesList } from '../NotesList';
 import { useStore } from 'react-context-hook';
 import faceIcon from '../face.svg';
 import { Navigate, useNavigate } from 'react-router';
+import ServicesList from '../ServicesList';
 
 export default function Home() {
   const [notes] = useStore<Note[]>('notes');
@@ -56,8 +57,15 @@ export default function Home() {
           <button className="col-5 btn btn-primary" onClick={() => navigate('/upload')}>Upload my notes</button>
           <button className="offset-2 col-5 btn btn-primary" onClick={() => navigate('/request-service')}>Request a service</button>
       </div>
+      <section className="showcase mt-5">
+        <div className="container-fluid p-0">
+          <h2 className='ms-5'>Services I can fulfill</h2>
+          <ServicesList services={[]} />
+        </div>
+      </section>
       <section className="showcase">
         <div className="container-fluid p-0">
+          <h2 className='ms-5'>All notes</h2>
           <NotesList notes={notes} />
         </div>
       </section>
