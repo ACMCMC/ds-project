@@ -330,6 +330,7 @@ contract NotesExchange {
             uint256,
             address,
             address,
+            bool,
             State,
             bytes32
         )
@@ -340,6 +341,7 @@ contract NotesExchange {
             notes.notesValue,
             notes.noteTaker,
             notes.renter,
+            notes.forBuy,
             notes.transactionState,
             notes.notesHash
         );

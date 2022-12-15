@@ -18,7 +18,7 @@ contract("NotesExchange", accounts => {
 
     it("ensures that notes for sale can't have non-positive price", async ()=> {
         assert.rejects(async () => {
-            await instance.publishNotesForSale(0, {from: accounts[0]});
+            await instance.publishNotesForSale({from: accounts[0], value: 0});
         })  
     });
 
@@ -26,5 +26,15 @@ contract("NotesExchange", accounts => {
         await instance.publishNotesForSale({from: accounts[0], value: 1});
         let balance = await instance.getBalance();
         assert.equal(balance, 1);
+        let notesCount = await instance.getNotesCount();
+        assert.equal(notesCount, 1);
     });
+
+    it("retrieves a note previously published", async () => {
+        await instance.publishNotesForSale({from: accounts[0], value: 2});
+        let note = await instance.getNote(1);
+        assert.equal(note[0], 0);
+        assert.equal(note[2], accounts[0]);
+        assert.equal(note[4], true);
+    })
 });
