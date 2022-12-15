@@ -135,13 +135,13 @@ contract NotesExchange {
     }
 
     // Function to publish already taken notes for sale
-    function publishNotesForSale(uint256 price) public {
-        require(price > 0, "The price must be greater than 0");
+    function publishNotesForSale() public payable {
+        require(msg.value >= 0, "The price must be non-negative");
 
         // Initialize a new notes struct
         Notes memory newNotes;
         newNotes.forBuy = true;
-        newNotes.notesValue = price;
+        newNotes.notesValue = msg.value;
         newNotes.noteTaker = payable(msg.sender);
         newNotes.renter = payable(address(this));
         newNotes.id = notesTotalCount;
@@ -162,7 +162,7 @@ contract NotesExchange {
         public
         payable
     {
-        require(msg.value > 0, "The value of the notes must be greater than 0");
+        require(msg.value >= 0, "The value of the notes must be non-negative");
         require(
             msg.value % 2 == 0,
             "The deposit must be double the notes value"
@@ -330,6 +330,7 @@ contract NotesExchange {
             uint256,
             address,
             address,
+            bool,
             State,
             bytes32
         )
@@ -340,6 +341,7 @@ contract NotesExchange {
             notes.notesValue,
             notes.noteTaker,
             notes.renter,
+            notes.forBuy,
             notes.transactionState,
             notes.notesHash
         );
