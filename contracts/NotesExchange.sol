@@ -135,13 +135,13 @@ contract NotesExchange {
     }
 
     // Function to publish already taken notes for sale
-    function publishNotesForSale(uint256 price) public {
-        require(price > 0, "The price must be greater than 0");
+    function publishNotesForSale() public payable {
+        require(msg.value > 0, "The price must be greater than 0");
 
         // Initialize a new notes struct
         Notes memory newNotes;
         newNotes.forBuy = true;
-        newNotes.notesValue = price;
+        newNotes.notesValue = msg.value;
         newNotes.noteTaker = payable(msg.sender);
         newNotes.renter = payable(address(this));
         newNotes.id = notesTotalCount;
