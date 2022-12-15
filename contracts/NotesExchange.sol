@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import "@openzeppelin/contracts/utils/Base64.sol";      // npm dependency
+
+
 contract NotesExchange {
     address payable public owner;                           // The address of the owner of the contract (manager of the system)
     mapping(uint256 => Notes) private notesList;            // The list of all notes that exist
@@ -135,16 +138,22 @@ contract NotesExchange {
     }
 
     // Function to publish already taken notes for sale
-    function publishNotesForSale(uint256 price) public {
-        require(price > 0, "The price must be greater than 0");
+    function publishNotesForSale(string memory title, string memory description, bytes memory data) 
+        public 
+        payable 
+    {
+
+        string memory pdf = Base64.encode(data);
+        bytes32 notesHash = keccak256(abi.encodePacked(title, description, pdf));
 
         // Initialize a new notes struct
         Notes memory newNotes;
         newNotes.forBuy = true;
-        newNotes.notesValue = price;
+        newNotes.notesValue = msg.value;
         newNotes.noteTaker = payable(msg.sender);
         newNotes.renter = payable(address(this));
         newNotes.id = notesTotalCount;
+        newNotes.notesHash = notesHash;
         notesTotalCount++;
 
         // Add the notes to the list of notes
@@ -158,15 +167,17 @@ contract NotesExchange {
     }
 
     // Function to publish a renting offer to take notes in the future
-    function publishNotesForRenting()
+    function publishNotesForRenting(string memory title, string memory description, bytes memory data)
         public
         payable
     {
-        require(msg.value > 0, "The value of the notes must be greater than 0");
         require(
             msg.value % 2 == 0,
             "The deposit must be double the notes value"
         );
+
+        string memory pdf = Base64.encode(data);
+        bytes32 notesHash = keccak256(abi.encodePacked(title, description, pdf));
 
         // Initialize a new notes struct
         Notes memory newNotes;
@@ -175,6 +186,7 @@ contract NotesExchange {
         newNotes.noteTaker = payable(msg.sender);
         newNotes.renter = payable(address(this));
         newNotes.id = notesTotalCount;
+        newNotes.notesHash = notesHash;
         notesTotalCount++;
 
         // Add the notes to the list of notes
@@ -330,6 +342,7 @@ contract NotesExchange {
             uint256,
             address,
             address,
+            bool,
             State,
             bytes32
         )
@@ -340,6 +353,7 @@ contract NotesExchange {
             notes.notesValue,
             notes.noteTaker,
             notes.renter,
+            notes.forBuy,
             notes.transactionState,
             notes.notesHash
         );
