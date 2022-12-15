@@ -136,7 +136,7 @@ contract NotesExchange {
 
     // Function to publish already taken notes for sale
     function publishNotesForSale() public payable {
-        require(msg.value > 0, "The price must be greater than 0");
+        require(msg.value >= 0, "The price must be non-negative");
 
         // Initialize a new notes struct
         Notes memory newNotes;
@@ -162,7 +162,7 @@ contract NotesExchange {
         public
         payable
     {
-        require(msg.value > 0, "The value of the notes must be greater than 0");
+        require(msg.value >= 0, "The value of the notes must be non-negative");
         require(
             msg.value % 2 == 0,
             "The deposit must be double the notes value"
