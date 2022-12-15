@@ -6,6 +6,7 @@ import { Note } from "../Note";
 export default function UploadNote() {
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [acc] = useStore<string>('account');
   const [price, setPrice] = useState<number>(0.0);
   const [notes, setNotes] = useStore<Note[]>('notes');
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
@@ -13,7 +14,7 @@ export default function UploadNote() {
   const handleSubmit = (e: any) => {
     e.preventDefault();
 
-    setNotes([...notes, { owner: '0x', description: 'test', price: 0, title: (name as string), uuid: (notes.length + 1).toString(), buyer: ['0x'], forBuy: Math.random() % 2 === 0 }]);
+    setNotes([...notes, { owner: acc, description: 'test', price: 0, title: (name as string), uuid: (notes.length + 1).toString(), buyer: ['0x'], forBuy: true}]);
   }
 
   return (
