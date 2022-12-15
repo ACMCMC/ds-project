@@ -20,6 +20,7 @@ export default function UploadNote() {
   return (
     <div className="container-fluid align-items-center">
       <form className="p-5 col-12 col-md-6 mx-auto" onSubmit={e => { handleSubmit(e) }}>
+        <h1>Upload a note</h1>
         <div className="my-3">
           <label htmlFor="name" className="form-label">Name</label>
           <input type="text" className="form-control" id="name" aria-describedby="nameHelp" onChange={e => setName(e.target.value)} value={name} />

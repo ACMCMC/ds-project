@@ -20,6 +20,7 @@ import Home from './routes/Home';
 import { withStore, useStore } from 'react-context-hook';
 import UploadNote from './routes/UploadNote';
 import Profile from './routes/Profile';
+import RequestService from './routes/RequestService';
 
 const NOTES_EXCHANGE_ADDRESS = '0x30BAA2B5118B5Fe1F8658338cB9F62eA6B0c5d1F';
 
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="/" element={<Home></Home>} />
             <Route path="/upload" element={<UploadNote></UploadNote>} />
             <Route path="/profile" element={<Profile></Profile>} />
+            <Route path="/request-service" element={<RequestService></RequestService>} />
           </Routes>
           <Footer></Footer>
       </BrowserRouter>

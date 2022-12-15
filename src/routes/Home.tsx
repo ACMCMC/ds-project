@@ -52,10 +52,9 @@ export default function Home() {
         </div>
       </section>
       {/* Image Showcases */}
-      <div className="container-fluid pt-5 pb-3">
-        <div className='row align-items-center mx-5'>
-          <button className="btn btn-primary" onClick={() => navigate('/upload')}>Upload my notes</button>
-        </div>
+      <div className="container col-4 mx-auto pt-5 pb-3">
+          <button className="col-5 btn btn-primary" onClick={() => navigate('/upload')}>Upload my notes</button>
+          <button className="offset-2 col-5 btn btn-primary" onClick={() => navigate('/request-service')}>Request a service</button>
       </div>
       <section className="showcase">
         <div className="container-fluid p-0">
