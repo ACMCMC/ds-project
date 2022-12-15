@@ -16,9 +16,9 @@ contract("NotesExchange", accounts => {
         assert.equal(balance, 0);
     });
 
-    it("ensures that notes for sale can't have non-negative price", async ()=> {
+    it("ensures that notes for renting don't accept odd values", async ()=> {
         assert.rejects(async () => {
-            await instance.publishNotesForSale({from: accounts[0], value: -3});
+            await instance.publishNotesForRenting({from: accounts[0], value: 3});
         })  
     });
 
