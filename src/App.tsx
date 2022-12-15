@@ -30,10 +30,11 @@ const loadBlockchainData = async (setAccount: Function, setNotesExchange: Functi
   const web3 = new Web3(Web3.givenProvider)
   const accounts = await web3.eth.getAccounts()
   setAccount(accounts[0])
+  console.log('account: ', accounts[0]);
   const notesExchange = new web3.eth.Contract(truffleFile.abi as AbiItem[], NOTES_EXCHANGE_ADDRESS);
   setNotesExchange(notesExchange)
   const notesCount: number = await notesExchange.methods.getNotesCount().call();
-  console.log(notesCount);
+  console.log('notesCount: ', notesCount);
   const notes: Note[] = []
   for (var i = 1; i <= notesCount; i++) {
     const note = await notesExchange.methods.getNote(i).call()

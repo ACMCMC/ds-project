@@ -13,7 +13,7 @@ export default function UploadNote() {
   const handleSubmit = (e: any) => {
     e.preventDefault();
 
-    setNotes([...notes, { owner: '0x', description: 'test', price: 0, title: (name as string), uuid: (notes.length + 1).toString(), buyer: ['0x'] }]);
+    setNotes([...notes, { owner: '0x', description: 'test', price: 0, title: (name as string), uuid: (notes.length + 1).toString(), buyer: ['0x'], forBuy: Math.random() % 2 === 0 }]);
   }
 
   return (
