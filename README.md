@@ -18,9 +18,14 @@ Another option is to buy notes that were already taken and were uploaded to a co
 ## Technologies used
 * Truffle
 * Ganache
+* Bootstrap
+* React
 * Metamask
 * Remix
 
 ## How to run the project
 
-Run: `npm run ganache`
+Run: `npm install`
+Run: `npm run ganache` (in a different terminal)
+Run: `npm run truffle-deploy`
+Run: `npm run start`
