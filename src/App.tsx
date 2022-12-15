@@ -16,9 +16,9 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import ReactDOM from "react-dom/client";
-import Home from './routes/home';
+import Home from './routes/Home';
 import { withStore, useStore } from 'react-context-hook';
-import UploadNote from './routes/uploadNote';
+import UploadNote from './routes/UploadNote';
 
 const NOTES_EXCHANGE_ADDRESS = '0x30BAA2B5118B5Fe1F8658338cB9F62eA6B0c5d1F';
 
