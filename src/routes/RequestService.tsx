@@ -3,6 +3,7 @@ import { useStore } from "react-context-hook";
 import { Navigate } from "react-router";
 import { Contract } from "web3-eth-contract";
 import { Note } from "../Note";
+import { ethToWei } from "../utils";
 
 export default function RequestService() {
   const [name, setName] = useState<string>('');
@@ -12,10 +13,19 @@ export default function RequestService() {
   const [month, setMonth] = useState<number>(1);
   const [year, setYear] = useState<number>(2022);
   const [notesExchange] = useStore<Contract>('notesExchange');
+  const [thisAccount] = useStore<string>('account');
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    //notesExchange?.methods.requestService(name, otherAccount, price, day, month, year).send({ from: '
+
+    if (!name || !otherAccount || !price || !day || !month || !year) {
+      return;
+    }
+
+    // Take day, month and year, and turn it into a Date object
+    const deadline: Date = new Date(year, month, day)
+
+    notesExchange.methods.createNotesRenting(name, deadline.getTime(), otherAccount).send({ from: thisAccount, value: ethToWei(price) });
   }
 
   return (

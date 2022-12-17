@@ -45,7 +45,7 @@ contract NotesExchange {
         address payable renter;
         address payable fulfiller;
         string subject;
-        uint deadline; // The deadline for the note taker to complete the transaction
+        uint256 deadline; // The deadline for the note taker to complete the transaction
     }
 
     /* To rent the notes, both renter and noteTaker have to deposit twice the value of the notes.
@@ -57,6 +57,10 @@ contract NotesExchange {
     // Events to keep a record of the transaction
     event NotesSold(Notes notes, address renter);
 
+    event NotesForSaleEnabled(Notes notes);
+
+    event NotesForSaleDisabled(Notes notes);
+
     event NotesPublished(Notes notes);
 
     event NotesRentingCreated(NotesRenting renting);
@@ -66,11 +70,10 @@ contract NotesExchange {
     event NotesRentingFulfilled(NotesRenting renting);
 
     // Modifier that checks if the caller is the noteTaker
-    modifier onlyNoteTaker(uint256 notesId) {
-        Notes memory notes = notesMapping[notesId];
+    modifier onlyNoteTaker(Notes memory note) {
         require(
-            msg.sender == notes.noteTaker,
-            "Only the note taker can call this function"
+            payable(msg.sender) == note.noteTaker,
+            "Only the note taker can call this function."
         );
         _;
     }
@@ -87,7 +90,7 @@ contract NotesExchange {
     // Modifier that checks if the caller is the fulfiller of the service
     modifier onlyFulfiller(NotesRenting memory renting) {
         require(
-            renting.fulfiller == msg.sender,
+            renting.fulfiller == payable(msg.sender),
             "Only the fulfiller can call this function"
         );
         _;
@@ -143,7 +146,7 @@ contract NotesExchange {
     function publishNotesForSale(
         string memory title,
         string memory description,
-        uint notesValue,
+        uint256 notesValue,
         bytes memory data
     ) public payable {
         string memory pdf = Base64.encode(data);
@@ -168,10 +171,26 @@ contract NotesExchange {
         emit NotesPublished(newNotes);
     }
 
+    function enableNotesForSale(uint256 notesId)
+        public
+        onlyNoteTaker(notesMapping[notesId])
+    {
+        notesMapping[notesId].forBuy = true;
+        emit NotesForSaleEnabled(notesMapping[notesId]);
+    }
+
+    function disableNotesForSale(uint256 notesId)
+        public
+        onlyNoteTaker(notesMapping[notesId])
+    {
+        notesMapping[notesId].forBuy = false;
+        emit NotesForSaleDisabled(notesMapping[notesId]);
+    }
+
     // Function to publish a renting offer to take notes in the future
     function createNotesRenting(
         string memory subject,
-        uint deadline,
+        uint256 deadline,
         address fulfiller
     ) public payable {
         require(
@@ -292,7 +311,10 @@ contract NotesExchange {
         Notes[] memory myNotes = new Notes[](myNotesCount);
         uint256 idx = 0;
         for (uint256 i = 0; i < notesTotalCount; i++) {
-            if (notesMapping[i].noteTaker == msg.sender && notesMapping[i].forBuy) {
+            if (
+                notesMapping[i].noteTaker == msg.sender &&
+                notesMapping[i].forBuy
+            ) {
                 myNotes[idx] = notesMapping[i];
                 idx++;
             }
@@ -306,28 +328,67 @@ contract NotesExchange {
     }
 
     // Get the details of a note
-    /*function getNote(uint256 notesId)
+    function getNote(uint256 notesId)
         public
         view
         returns (
             uint256,
             uint256,
             address,
-            address,
+            address[] memory,
             bool,
-            State,
-            bytes32
+            bytes32,
+            string memory,
+            string memory
         )
     {
         Notes memory notes = notesMapping[notesId];
+        address[] memory owners; // We need to cast this
+        for (uint i = 0; i < notes.owners.length; i++) {
+            owners[i] = notes.owners[i];
+        }
         return (
             notes.id,
             notes.notesValue,
             notes.noteTaker,
-            notes.renter,
+            owners,
             notes.forBuy,
-            notes.transactionState,
-            notes.notesHash
+            notes.notesHash,
+            notes.title,
+            notes.description
         );
-    }*/
+    }
+
+    // Get the total number of notes
+    function getRentingsCount() public view returns (uint256) {
+        return rentingTotalCount;
+    }
+
+    // Get the details of a note
+    function getRenting(uint256 rentingId)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            State,
+            uint256,
+            address,
+            address,
+            string memory,
+            uint256
+        )
+    {
+        NotesRenting memory renting = rentingList[rentingId];
+        return (
+            renting.id,
+            renting.notes.id,
+            renting.transactionState,
+            renting.depositedMoney,
+            renting.renter,
+            renting.fulfiller,
+            renting.subject,
+            renting.deadline
+        );
+    }
 }

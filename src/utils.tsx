@@ -1,0 +1,1 @@
+export const ethToWei = (eth: number) => eth * 1000000000000000000;

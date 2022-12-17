@@ -58,14 +58,14 @@ export default function Home() {
           <button className="offset-2 col-5 btn btn-primary" onClick={() => navigate('/request-service')}>Request a service</button>
       </div>
       <section className="showcase mt-5">
-        <div className="container-fluid p-0">
-          <h2 className='ms-5'>Services I can fulfill</h2>
+        <div className="container-fluid p-5">
+          <h2 className=''>Services I can fulfill</h2>
           <ServicesList services={[]} />
         </div>
       </section>
       <section className="showcase">
-        <div className="container-fluid p-0">
-          <h2 className='ms-5'>All notes</h2>
+        <div className="container-fluid p-0 p-5">
+          <h2 className=''>All notes</h2>
           <NotesList notes={notes} />
         </div>
       </section>

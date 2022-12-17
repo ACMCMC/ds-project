@@ -1,6 +1,7 @@
 import { useStore } from 'react-context-hook';
 import { Contract } from 'web3-eth-contract';
 import noteIcon from './note.svg';
+import { ethToWei } from './utils';
 
 /*
 From Contract:
@@ -37,7 +38,15 @@ export function parseNote(originalNote: any) {
 }
 
 const buyNote = (note: Note, notesExchange: Contract, account: string) => {
-  notesExchange.methods.buyNotes(note.id).send({ from: account, value: note.notesValue });
+  notesExchange.methods.buyNotes(note.id).send({ from: account, value: ethToWei(note.notesValue) });
+}
+
+const enableSelling = (note: Note, notesExchange: Contract, account: string) => {
+  notesExchange.methods.enableNotesForSale(note.id).send({ from: account });
+}
+
+const disableSelling = (note: Note, notesExchange: Contract, account: string) => {
+  notesExchange.methods.disableNotesForSale(note.id).send({ from: account });
 }
 
 export function NoteComponent({ note }: { note: Note }) {
@@ -45,13 +54,14 @@ export function NoteComponent({ note }: { note: Note }) {
   const [acc] = useStore<string>('account');
   const [notesExchange] = useStore<Contract>('notesExchange');
   const bought = note.owners.includes(acc);
+  const owns = note.noteTaker === acc;
 
   if (note.forBuy) {
     return (
       <div className="card">
         <div className="card-header">
           {note.id}
-              {note.noteTaker === acc ? <span className="badge text-bg-success ms-3">Yours</span> : null}
+              {owns ? <span className="badge text-bg-success ms-3">Yours</span> : null}
         </div>
         <div className="card-body">
           <div className="d-flex p-0">
@@ -67,9 +77,11 @@ export function NoteComponent({ note }: { note: Note }) {
                   <div className="input-group-text">ETH {note.notesValue}</div>
                 </div>
                 <div className="btn-group" role="group" aria-label="First group">
-                  <button className="btn btn-primary position-relative" onClick={() => buyNote(note, notesExchange, acc)} disabled={bought}>Buy
+                  <button className="btn btn-primary position-relative" onClick={() => buyNote(note, notesExchange, acc)} disabled={bought || !note.forBuy}>Buy
                     {bought ? <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">Bought</span> : null}
                   </button>
+                  {owns && note.forBuy ? <button className="btn btn-secondary" onClick={() => disableSelling(note, notesExchange, acc)}>Disable selling</button> : null}
+                  {owns && !note.forBuy ? <button className="btn btn-danger" onClick={() => enableSelling(note, notesExchange, acc)}>Enable selling</button> : null}
                 </div>
               </div>
             </div>

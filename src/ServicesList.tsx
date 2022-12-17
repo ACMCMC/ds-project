@@ -6,8 +6,8 @@ import noteIcon from './service.svg';
 export default function ServicesList({ services }: { services: Service[] }) {
   // If there are no notes, display a message
   if (services.length === 0) {
-    return <div className="row g-0 border rounded m-5 p-5">
-      <div className="d-flex col-lg-4 order-lg-1">
+    return <div className="row g-0 border rounded my-3 p-5">
+      <div className="d-flex col-lg-4 order-lg-1 mb-2">
         <img src={noteIcon}></img>
       </div>
       <div className="col-lg-8 order-lg-2 my-auto showcase-text">
@@ -20,7 +20,7 @@ export default function ServicesList({ services }: { services: Service[] }) {
   return (
     <>
       {services.map((serv, key) =>
-        <div className="m-5" key={key}>
+        <div className="py-3" key={key}>
           <ServiceComponent service={serv}></ServiceComponent>
         </div>
       )}

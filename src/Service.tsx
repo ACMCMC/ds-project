@@ -1,4 +1,5 @@
 import { useStore } from 'react-context-hook';
+import { Contract } from 'web3-eth-contract';
 import { Note } from './Note';
 import serviceIcon from './service.svg';
 
@@ -36,12 +37,28 @@ enum TransactionState {
   Aborted
 }
 
+export function parseService(originalService: any, notes: Map<string, Note>) {
+  const parsedService: Service = {
+    ...(originalService as Service),
+    notes: originalService.notes ? notes.get(originalService.notes) : undefined,
+    transactionState: TransactionState.Pending,
+    depositedMoney: parseInt(originalService.depositedMoney),
+    deadline: new Date(originalService.deadline)
+  }
+  return parsedService;
+}
+
+const rejectService = (service: Service, notesExchange: Contract, acc: string) => {
+  notesExchange.methods.buyNotes(service.id).send({ from: acc });
+}
+
 export function ServiceComponent({ service }: { service: Service }) {
   const [acc] = useStore<string>('account');
+  const [notesExchange] = useStore<Contract>('notesExchange');
 
   //if (note.forBuy) {
   return (
-    <div className="card m-5">
+    <div className="card py-3">
       <div className="card-header">
         {service.id}
         {service.fulfiller === acc ? <span className="badge text-bg-success ms-3">You provide it</span> : null}
@@ -55,10 +72,16 @@ export function ServiceComponent({ service }: { service: Service }) {
             <h5 className="card-title">{service.subject}</h5>
             <div className="btn-toolbar" role="toolbar" aria-label="Toolbar">
               <div className="input-group me-2">
+                <div className="input-group-text">Deadline</div>
+                <div className="input-group-text">{service.deadline.toISOString()}</div>
+              </div>
+              <div className="input-group me-2">
                 <div className="input-group-text">Price</div>
                 <div className="input-group-text">ETH {service.depositedMoney}</div>
               </div>
               <div className="btn-group" role="group" aria-label="First group">
+                <button className="btn btn-secondary position-relative" onClick={() => rejectService(service, notesExchange, acc)} >Reject</button>
+                <button className="btn btn-primary position-relative" onClick={() => {}} >Fulfill</button>
               </div>
             </div>
           </div>

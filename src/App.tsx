@@ -21,10 +21,11 @@ import { withStore, useStore } from 'react-context-hook';
 import UploadNote from './routes/UploadNote';
 import Profile from './routes/Profile';
 import RequestService from './routes/RequestService';
+import { parseService, Service } from './Service';
 
-const NOTES_EXCHANGE_ADDRESS = '0x4a9eB39dc878aC5a35B4E920C689Ff4fcD3C3488';
+const NOTES_EXCHANGE_ADDRESS = '0x8E624C6169CC9bb0d848B1D71AA5453f4Df3b509';
 
-const loadBlockchainData = async (setAccount: Function, setNotesExchange: Function, setNotes: Function, notes: Map<string, Note>) => {
+const loadBlockchainData = async (setAccount: Function, setNotesExchange: Function, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {
   if (Web3.givenProvider === null) {
     return;
   }
@@ -35,20 +36,29 @@ const loadBlockchainData = async (setAccount: Function, setNotesExchange: Functi
   const notesExchange = new web3.eth.Contract(truffleFile.abi as AbiItem[], NOTES_EXCHANGE_ADDRESS);
   setNotesExchange(notesExchange);
   const notesCount: number = await notesExchange.methods.getNotesCount().call();
-  console.log('notesCount: ', notesCount);
-  /*const notes: Note[] = []
-  for (var i = 1; i <= notesCount; i++) {
+  const loadedNotes: Note[] = [];
+  for (var i = 0; i < notesCount; i++) {
     const note = await notesExchange.methods.getNote(i).call()
-    notes.push(note)
+    loadedNotes.push(note)
   }
   setNotes(
-    notes
-  )*/
+    loadedNotes
+  )
 
-  setupListeners(notesExchange, setNotes, notes);
+  const servicesCount: number = await notesExchange.methods.getRentingsCount().call();
+  const loadedRentings: Service[] = [];
+  for (var i = 0; i < servicesCount; i++) {
+    const renting = await notesExchange.methods.getRenting(i).call()
+    loadedRentings.push(parseService(renting, notes));
+  }
+  setServices(
+    loadedRentings
+  )
+
+  setupListeners(notesExchange, setNotes, notes, setServices, services);
 }
 
-const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<string, Note>) => {
+const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {
   console.log('Setting up listeners...');
 
   const getNotesMap = (notesList: Note[]) => {
@@ -60,57 +70,52 @@ const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<
     return map;
   }
 
-  notesExchange.events.NotesPublished({
-  }, (error: Error, event: any) => {
+  const updateNote = (error: Error, event: any) => {
     console.log('event: ', event);
     const publishedNote: Note = event.returnValues.notes;
     const newNotes = notes;
     newNotes.set(publishedNote.id, parseNote(publishedNote));
     setNotes(newNotes);
-  });
+  }
+
+  const updateRenting = (error: Error, event: any) => {
+    console.log('event: ', event);
+    const publishedService: Service = event.returnValues.renting;
+    const newServices = services;
+    newServices.set(publishedService.id, parseService(publishedService, notes));
+    setServices(newServices);
+  }
+
+  notesExchange.events.NotesPublished({
+  }, updateNote);
+
+  notesExchange.events.NotesRentingCreated({
+  }, updateRenting);
+
+  notesExchange.events.NotesRentingAborted({
+  }, updateRenting);
+
+  notesExchange.events.NotesRentingFulfilled({
+  }, updateRenting);
 
   notesExchange.events.NotesSold({
-  }, (error: Error, event: any) => {
-    console.log('event: ', event);
-    const soldNote: Note = event.returnValues.notes;
-    const newNotes = notes;
-    newNotes.set(soldNote.id, parseNote(soldNote));
-    setNotes(newNotes);
-  });
+  }, updateNote);
 
-  notesExchange.getPastEvents('NotesPublished', {
-    fromBlock: 0
-  }, (error: Error, events: any[]) => {
-    console.log('events: ', events);
-    const notes = getNotesMap(events.map(e => parseNote(e.returnValues.notes)));
-    setNotes(notes);
-  });
-}
+  notesExchange.events.NotesForSaleEnabled({
+  }, updateNote);
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Home></Home>,
-  },
-  {
-    path: "/upload",
-    element: <UploadNote></UploadNote>,
-  },
-]);
-
-type AppState = {
-  account: string | undefined,
-  notes: Map<string, Note>,
-  notesExchange?: Contract
+  notesExchange.events.NotesForSaleDisabled({
+  }, updateNote);
 }
 
 const App = () => {
   const [account, setAccount] = useStore<string>('account');
   const [notes, setNotes] = useStore<Map<string, Note>>('notes');
+  const [services, setServices] = useStore<Map<string, Service>>('rentings');
   const [notesExchange, setNotesExchange] = useStore('notesExchange');
 
   useEffect(() => {
-    loadBlockchainData(setAccount, setNotesExchange, setNotes, notes);
+    loadBlockchainData(setAccount, setNotesExchange, setNotes, notes, setServices, services);
   }, []);
 
   return (
@@ -127,9 +132,17 @@ const App = () => {
   );
 }
 
+type AppState = {
+  account: string | undefined,
+  notes: Map<string, Note>,
+  rentings: Map<string, Service>,
+  notesExchange?: Contract
+}
+
 const initialState: AppState = {
   account: undefined,
   notes: new Map<string, Note>(),
+  rentings: new Map<string, Service>(),
   notesExchange: undefined
 };
 
