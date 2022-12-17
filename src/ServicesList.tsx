@@ -3,9 +3,11 @@ import { Note, NoteComponent } from './Note';
 import { Service, ServiceComponent } from './Service';
 import noteIcon from './service.svg';
 
-export default function ServicesList({ services }: { services: Service[] }) {
+export default function ServicesList({ services }: { services: Map<string, Service> }) {
+  const servicesList = Array.from(services.values());
+
   // If there are no notes, display a message
-  if (services.length === 0) {
+  if (servicesList.length === 0) {
     return <div className="row g-0 border rounded my-3 p-5">
       <div className="d-flex col-lg-4 order-lg-1 mb-2">
         <img src={noteIcon}></img>
@@ -19,7 +21,7 @@ export default function ServicesList({ services }: { services: Service[] }) {
 
   return (
     <>
-      {services.map((serv, key) =>
+      {servicesList.map((serv, key) =>
         <div className="py-3" key={key}>
           <ServiceComponent service={serv}></ServiceComponent>
         </div>

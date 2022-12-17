@@ -18,7 +18,7 @@ contract("NotesExchange", accounts => {
 
     it("ensures that notes for renting don't accept odd values", async ()=> {
         assert.rejects(async () => {
-            await instance.publishNotesForRenting({from: accounts[0], value: 3});
+            await instance.publishNotesForService({from: accounts[0], value: 3});
         })  
     });
 

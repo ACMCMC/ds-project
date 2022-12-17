@@ -94,7 +94,7 @@ export function NoteComponent({ note }: { note: Note }) {
     );
   } else {
     return (
-      <div className="card text-bg-info m-5">
+      <div className="card text-bg-info">
         <div className="card-header">
           {note.id}
         </div>

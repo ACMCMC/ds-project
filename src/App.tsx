@@ -21,9 +21,11 @@ import { withStore, useStore } from 'react-context-hook';
 import UploadNote from './routes/UploadNote';
 import Profile from './routes/Profile';
 import RequestService from './routes/RequestService';
-import { parseService, Service } from './Service';
+import { parseService, Service, TransactionState } from './Service';
+import FulfillService from './routes/FulfillService';
+import { weiToEth } from './utils';
 
-const NOTES_EXCHANGE_ADDRESS = '0x8E624C6169CC9bb0d848B1D71AA5453f4Df3b509';
+const NOTES_EXCHANGE_ADDRESS = '0x19EC076684C3f1fF8FBe5b2168476bbFEf2b4411';
 
 const loadBlockchainData = async (setAccount: Function, setNotesExchange: Function, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {
   if (Web3.givenProvider === null) {
@@ -36,23 +38,48 @@ const loadBlockchainData = async (setAccount: Function, setNotesExchange: Functi
   const notesExchange = new web3.eth.Contract(truffleFile.abi as AbiItem[], NOTES_EXCHANGE_ADDRESS);
   setNotesExchange(notesExchange);
   const notesCount: number = await notesExchange.methods.getNotesCount().call();
+  console.log('There are ' + notesCount + ' notes in the contract.');
   const loadedNotes: Note[] = [];
   for (var i = 0; i < notesCount; i++) {
-    const note = await notesExchange.methods.getNote(i).call()
-    loadedNotes.push(note)
+    const rawNote = await notesExchange.methods.getNote(i).call();
+    const parsedNote: Note = {
+      id: rawNote[0],
+      notesValue: rawNote[1],
+      noteTaker: rawNote[2],
+      owners: rawNote[3],
+      forBuy: rawNote[4],
+      notesHash: rawNote[5],
+      title: rawNote[6],
+      description: rawNote[7]
+    }
+    loadedNotes.push(parseNote(parsedNote))
   }
+  console.log('loadedNotes: ', loadedNotes);
   setNotes(
     loadedNotes
   )
 
-  const servicesCount: number = await notesExchange.methods.getRentingsCount().call();
-  const loadedRentings: Service[] = [];
+  const servicesCount: number = await notesExchange.methods.getServicesCount().call();
+  console.log('There are ' + servicesCount + ' services in the contract.');
+  const loadedServices: Service[] = [];
   for (var i = 0; i < servicesCount; i++) {
-    const renting = await notesExchange.methods.getRenting(i).call()
-    loadedRentings.push(parseService(renting, notes));
+    const rawService = await notesExchange.methods.getService(i).call()
+    console.log(rawService)
+    const parsedService: Service = {
+      id: rawService[0],
+      notes: rawService[1],
+      transactionState: rawService[2],
+      depositedMoney: rawService[3],
+      renter: rawService[4],
+      fulfiller: rawService[5],
+      subject: rawService[6],
+      deadline: rawService[7]
+    }
+    loadedServices.push(parseService(parsedService, notes));
   }
+  console.log('loadedServices: ', loadedServices);
   setServices(
-    loadedRentings
+    loadedServices
   )
 
   setupListeners(notesExchange, setNotes, notes, setServices, services);
@@ -78,7 +105,7 @@ const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<
     setNotes(newNotes);
   }
 
-  const updateRenting = (error: Error, event: any) => {
+  const updateService = (error: Error, event: any) => {
     console.log('event: ', event);
     const publishedService: Service = event.returnValues.renting;
     const newServices = services;
@@ -89,14 +116,14 @@ const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<
   notesExchange.events.NotesPublished({
   }, updateNote);
 
-  notesExchange.events.NotesRentingCreated({
-  }, updateRenting);
+  notesExchange.events.NotesServiceCreated({
+  }, updateService);
 
-  notesExchange.events.NotesRentingAborted({
-  }, updateRenting);
+  notesExchange.events.NotesServiceAborted({
+  }, updateService);
 
-  notesExchange.events.NotesRentingFulfilled({
-  }, updateRenting);
+  notesExchange.events.NotesServiceFulfilled({
+  }, updateService);
 
   notesExchange.events.NotesSold({
   }, updateNote);
@@ -111,7 +138,7 @@ const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<
 const App = () => {
   const [account, setAccount] = useStore<string>('account');
   const [notes, setNotes] = useStore<Map<string, Note>>('notes');
-  const [services, setServices] = useStore<Map<string, Service>>('rentings');
+  const [services, setServices] = useStore<Map<string, Service>>('services');
   const [notesExchange, setNotesExchange] = useStore('notesExchange');
 
   useEffect(() => {
@@ -126,6 +153,7 @@ const App = () => {
         <Route path="/upload" element={<UploadNote></UploadNote>} />
         <Route path="/profile" element={<Profile></Profile>} />
         <Route path="/request-service" element={<RequestService></RequestService>} />
+        <Route path="/fulfill-service/:id" loader={(props: any) => <FulfillService service={services.get(props.match.params.id) as Service} />} />
       </Routes>
       <Footer></Footer>
     </BrowserRouter>
@@ -135,14 +163,14 @@ const App = () => {
 type AppState = {
   account: string | undefined,
   notes: Map<string, Note>,
-  rentings: Map<string, Service>,
+  services: Map<string, Service>,
   notesExchange?: Contract
 }
 
 const initialState: AppState = {
   account: undefined,
   notes: new Map<string, Note>(),
-  rentings: new Map<string, Service>(),
+  services: new Map<string, Service>(),
   notesExchange: undefined
 };
 

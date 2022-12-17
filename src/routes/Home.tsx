@@ -4,8 +4,10 @@ import { useStore } from 'react-context-hook';
 import faceIcon from '../face.svg';
 import { Navigate, useNavigate } from 'react-router';
 import ServicesList from '../ServicesList';
+import { Service } from '../Service';
 
 export default function Home() {
+  const [services] = useStore<Map<string, Service>>('services');
   const [notes] = useStore<Map<string, Note>>('notes');
   const navigate = useNavigate();
 
@@ -60,7 +62,7 @@ export default function Home() {
       <section className="showcase mt-5">
         <div className="container-fluid p-5">
           <h2 className=''>Services I can fulfill</h2>
-          <ServicesList services={[]} />
+          <ServicesList services={services} />
         </div>
       </section>
       <section className="showcase">

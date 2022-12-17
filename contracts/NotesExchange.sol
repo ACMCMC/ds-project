@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Base64.sol"; // npm dependency
 contract NotesExchange {
     address payable public owner; // The address of the owner of the contract (manager of the system)
     mapping(uint256 => Notes) private notesMapping; // The mapping of all notes that exist
-    mapping(uint256 => NotesRenting) private rentingList; // The list of all renting offers that exist, indexed by their ID
+    mapping(uint256 => NotesService) private rentingList; // The list of all renting offers that exist, indexed by their ID
     uint256 private notesTotalCount = 0; // The total number of notes that exist
     uint256 private rentingTotalCount = 0; // The total number of notes that exist
 
@@ -37,7 +37,7 @@ contract NotesExchange {
         string description;
     }
 
-    struct NotesRenting {
+    struct NotesService {
         uint256 id;
         Notes notes;
         State transactionState; // The current state of the renting transaction. Default value: Pending
@@ -63,11 +63,11 @@ contract NotesExchange {
 
     event NotesPublished(Notes notes);
 
-    event NotesRentingCreated(NotesRenting renting);
+    event NotesServiceCreated(NotesService renting);
 
-    event NotesRentingAborted(NotesRenting renting);
+    event NotesServiceAborted(NotesService renting);
 
-    event NotesRentingFulfilled(NotesRenting renting);
+    event NotesServiceFulfilled(NotesService renting);
 
     // Modifier that checks if the caller is the noteTaker
     modifier onlyNoteTaker(Notes memory note) {
@@ -88,7 +88,7 @@ contract NotesExchange {
     }
 
     // Modifier that checks if the caller is the fulfiller of the service
-    modifier onlyFulfiller(NotesRenting memory renting) {
+    modifier onlyFulfiller(NotesService memory renting) {
         require(
             renting.fulfiller == payable(msg.sender),
             "Only the fulfiller can call this function"
@@ -97,7 +97,7 @@ contract NotesExchange {
     }
 
     // Modifier that checks if the transaction is in the state passed as argument
-    modifier inState(NotesRenting memory renting, State expectedState) {
+    modifier inState(NotesService memory renting, State expectedState) {
         require(renting.transactionState == expectedState, "Invalid state");
         _;
     }
@@ -164,11 +164,11 @@ contract NotesExchange {
         newNotes.notesHash = notesHash;
         newNotes.title = title;
         newNotes.description = description;
-        notesTotalCount++;
 
         // Add the notes to the list of notes
-        notesMapping[notesTotalCount] = newNotes;
+        notesMapping[newNotes.id] = newNotes;
         emit NotesPublished(newNotes);
+        notesTotalCount++;
     }
 
     function enableNotesForSale(uint256 notesId)
@@ -188,7 +188,7 @@ contract NotesExchange {
     }
 
     // Function to publish a renting offer to take notes in the future
-    function createNotesRenting(
+    function createNotesService(
         string memory subject,
         uint256 deadline,
         address fulfiller
@@ -199,7 +199,7 @@ contract NotesExchange {
         );
 
         // Initialize a new notes struct
-        NotesRenting memory renting;
+        NotesService memory renting;
         renting.deadline = deadline;
         renting.fulfiller = payable(fulfiller);
         renting.depositedMoney = msg.value;
@@ -209,9 +209,9 @@ contract NotesExchange {
         renting.subject = subject;
 
         // Add the notes to the list of notes
-        rentingTotalCount++;
         rentingList[renting.id] = renting;
-        emit NotesRentingCreated(renting);
+        emit NotesServiceCreated(renting);
+        rentingTotalCount++;
     }
 
     // Function to abort a renting offer. The fulfiller can abort before fulfilling the service.
@@ -219,17 +219,17 @@ contract NotesExchange {
         public
         inState(rentingList[rentingId], State.Pending)
     {
-        NotesRenting memory renting = rentingList[rentingId];
+        NotesService memory renting = rentingList[rentingId];
 
         // To prevent a re-entrancy attack, the state is changed before sending the money
         renting.transactionState = State.Aborted;
-        emit NotesRentingAborted(renting);
+        emit NotesServiceAborted(renting);
 
         renting.renter.transfer(renting.depositedMoney); // Return the deposit money to the noteTaker
     }
 
     // Register an address as the renter, store its deposit and change the state of the transaction
-    function fulfillNotesRenting(
+    function fulfillNotesService(
         uint256 rentingId,
         string memory title,
         string memory description,
@@ -240,9 +240,9 @@ contract NotesExchange {
         inState(rentingList[rentingId], State.Pending)
         onlyFulfiller(rentingList[rentingId])
     {
-        NotesRenting memory renting = rentingList[rentingId];
+        NotesService memory renting = rentingList[rentingId];
 
-        emit NotesRentingFulfilled(renting);
+        emit NotesServiceFulfilled(renting);
         renting.transactionState = State.Established;
 
         string memory pdf = Base64.encode(data);
@@ -259,11 +259,11 @@ contract NotesExchange {
         newNotes.owners[0] = renting.renter;
         newNotes.id = notesTotalCount;
         newNotes.notesHash = notesHash;
-        notesTotalCount++;
 
         // Add the notes to the list of notes
-        notesMapping[notesTotalCount] = newNotes;
+        notesMapping[newNotes.id] = newNotes;
         emit NotesPublished(newNotes);
+        notesTotalCount++;
     }
 
     // Get the balance of the contract
@@ -360,12 +360,12 @@ contract NotesExchange {
     }
 
     // Get the total number of notes
-    function getRentingsCount() public view returns (uint256) {
+    function getServicesCount() public view returns (uint256) {
         return rentingTotalCount;
     }
 
     // Get the details of a note
-    function getRenting(uint256 rentingId)
+    function getService(uint256 rentingId)
         public
         view
         returns (
@@ -379,7 +379,7 @@ contract NotesExchange {
             uint256
         )
     {
-        NotesRenting memory renting = rentingList[rentingId];
+        NotesService memory renting = rentingList[rentingId];
         return (
             renting.id,
             renting.notes.id,
