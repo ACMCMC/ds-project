@@ -1,12 +1,12 @@
 import { Note } from '../Note';
-import { NotesList } from '../NotesList';
+import NotesList from '../NotesList';
 import { useStore } from 'react-context-hook';
 import faceIcon from '../face.svg';
 import { Navigate, useNavigate } from 'react-router';
 import ServicesList from '../ServicesList';
 
 export default function Home() {
-  const [notes] = useStore<Note[]>('notes');
+  const [notes] = useStore<Map<string, Note>>('notes');
   const navigate = useNavigate();
 
   return (
@@ -70,7 +70,7 @@ export default function Home() {
         </div>
       </section>
       {/* Testimonials */}
-      <section className="testimonials text-center bg-light">
+      <section className="testimonials text-center bg-light py-5">
         <div className="container">
           <h2 className="mb-5">What people are saying...</h2>
           <div className="row">

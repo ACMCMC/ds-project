@@ -1,48 +1,74 @@
 import { useStore } from 'react-context-hook';
+import { Note } from './Note';
 import serviceIcon from './service.svg';
 
+/*
+From Contract:
+
+    struct NotesRenting {
+        uint256 id;
+        Notes notes;
+        State transactionState; // The current state of the renting transaction. Default value: Pending
+        uint256 depositedMoney; // The total money sent. Half of it is the value of the notes.
+        address payable renter;
+        address payable fulfiller;
+        string subject;
+        uint deadline; // The deadline for the note taker to complete the transaction
+    }
+*/
+
 export type Service = {
-  uuid: string,
-  title: string,
-  price: number,
-  requester: string,
+  id: string,
+  notes?: Note,
+  transactionState: TransactionState,
+  depositedMoney: number,
+  renter: string,
   fulfiller: string,
+  subject: string,
   deadline: Date
+}
+
+enum TransactionState {
+  Pending,
+  Established,
+  WaitingClaim,
+  Completed,
+  Aborted
 }
 
 export function ServiceComponent({ service }: { service: Service }) {
   const [acc] = useStore<string>('account');
 
   //if (note.forBuy) {
-    return (
-      <div className="card m-5">
-        <div className="card-header">
-          {service.uuid}
-              {service.fulfiller === acc ? <span className="badge text-bg-success ms-3">You provide it</span> : null}
-        </div>
-        <div className="card-body">
-          <div className="d-flex p-0">
-            <div className="col flex-grow-0 ps-3 pe-4">
-              <img src={serviceIcon} className="mx-auto" alt="Notes icon" style={{ height: "auto", width: "auto" }}></img>
-            </div>
-            <div className="col flex-fill">
-              <h5 className="card-title">{service.title}</h5>
-              <div className="btn-toolbar" role="toolbar" aria-label="Toolbar">
-                <div className="input-group me-2">
-                  <div className="input-group-text">Price</div>
-                  <div className="input-group-text">ETH {service.price}</div>
-                </div>
-                <div className="btn-group" role="group" aria-label="First group">
-                </div>
+  return (
+    <div className="card m-5">
+      <div className="card-header">
+        {service.id}
+        {service.fulfiller === acc ? <span className="badge text-bg-success ms-3">You provide it</span> : null}
+      </div>
+      <div className="card-body">
+        <div className="d-flex p-0">
+          <div className="col flex-grow-0 ps-3 pe-4">
+            <img src={serviceIcon} className="mx-auto" alt="Notes icon" style={{ height: "auto", width: "auto" }}></img>
+          </div>
+          <div className="col flex-fill">
+            <h5 className="card-title">{service.subject}</h5>
+            <div className="btn-toolbar" role="toolbar" aria-label="Toolbar">
+              <div className="input-group me-2">
+                <div className="input-group-text">Price</div>
+                <div className="input-group-text">ETH {service.depositedMoney}</div>
+              </div>
+              <div className="btn-group" role="group" aria-label="First group">
               </div>
             </div>
           </div>
         </div>
-        <div className="card-footer text-muted">
-          Requester: {service.requester}
-        </div>
       </div>
-    );
+      <div className="card-footer text-muted">
+        Requester: {service.renter}
+      </div>
+    </div>
+  );
   /*} else {
     return (
       <div className="card text-bg-info m-5">

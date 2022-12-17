@@ -2,13 +2,18 @@ import { useState } from "react";
 import { useStore } from "react-context-hook";
 import { Navigate } from "react-router";
 import { Note } from "../Note";
-import { NotesList } from "../NotesList";
+import NotesList from "../NotesList";
 
 export default function Profile() {
-  const [notes, setNotes] = useStore<Note[]>('notes');
+  const [notes, setNotes] = useStore<Map<string, Note>>('notes');
   const [acc] = useStore<string>('account');
 
-  const userNotes = notes.filter(note => note.owner === acc);
+  const allNotes: Note[] = Array.from(notes.values());
+  const userNotes = allNotes.filter(note => note.noteTaker === acc);
+  const userNotesMap = new Map<string, Note>();
+  for (var i = 0; i < userNotes.length; i++) {
+    userNotesMap.set(userNotes[i].id, userNotes[i]);
+  }
 
   return (
     <div className="container-fluid align-items-center">
@@ -21,7 +26,7 @@ export default function Profile() {
         </dl>
         </div>
         <h2>Notes</h2>
-        <NotesList notes={userNotes}></NotesList>
+        <NotesList notes={userNotesMap}></NotesList>
       </div>
     </div>
   );

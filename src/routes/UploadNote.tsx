@@ -1,20 +1,38 @@
 import { useState } from "react";
 import { useStore } from "react-context-hook";
 import { Navigate } from "react-router";
+import { Contract } from "web3-eth-contract";
 import { Note } from "../Note";
 
 export default function UploadNote() {
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [acc] = useStore<string>('account');
+  const [notesExchange] = useStore<Contract>('notesExchange');
   const [price, setPrice] = useState<number>(0.0);
-  const [notes, setNotes] = useStore<Note[]>('notes');
+  const [notes, setNotes] = useStore<Map<string, Note>>('notes');
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    setNotes([...notes, { owner: acc, description: 'test', price: 0, title: (name as string), uuid: (notes.length + 1).toString(), buyer: ['0x'], forBuy: true}]);
+    if (!name || !description || !price || !selectedFile) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(selectedFile);
+    reader.onloadend = async (evt) => {
+      if (evt.target?.result) {
+        var fileByteArray: any[] = [];
+        const array = new Uint8Array(fileByteArray);
+        for (let i = 0; i < array.length; i++) {
+          fileByteArray.push(array[i]);
+        }
+        notesExchange.methods.publishNotesForSale(name, description, price, fileByteArray).send({ from: acc });
+        console.log('publishing note');
+      }
+    }
   }
 
   return (
@@ -37,7 +55,7 @@ export default function UploadNote() {
             <span className="input-group-text">ETH</span>
             <input
               type="number"
-              step="0.1"
+              step="1"
               min="0"
               className="form-control"
               id="price"
@@ -59,7 +77,7 @@ export default function UploadNote() {
           />
           <div id="fileHelp" className="form-text">The notes, in PDF format.</div>
         </div>
-        <button type="submit" className="btn btn-primary">Submit</button>
+        <button type="submit" className="btn btn-primary" disabled={!name || !description || !price || !selectedFile}>Submit</button>
       </form>
     </div>
   );
