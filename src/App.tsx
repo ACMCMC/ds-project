@@ -19,6 +19,7 @@ import Profile from './routes/Profile';
 import RequestService from './routes/RequestService';
 import { parseService, Service } from './Service';
 import FulfillService from './routes/FulfillService';
+import DelegateService from './routes/DelegateService';
 
 const NOTES_EXCHANGE_ADDRESS = truffleFile.networks[5777].address;
 
@@ -87,6 +88,9 @@ const setupListeners = (notesExchange: Contract, useRef: React.MutableRefObject<
 
   subscriptions.push(notesExchange.events.NotesServiceCompleted({
   }, updateService));
+  
+  subscriptions.push(notesExchange.events.NotesServiceDelegated({
+  }, updateService));
 
   subscriptions.push(notesExchange.events.NotesSold({
   }, updateNote));
@@ -132,6 +136,7 @@ const App = () => {
         <Route path="/profile" element={<Profile></Profile>} />
         <Route path="/request-service" element={<RequestService></RequestService>} />
         <Route path="/fulfill-service" element={<FulfillService></FulfillService>} />
+        <Route path="/delegate-service" element={<DelegateService></DelegateService>} />
       </Routes>
       <Footer></Footer>
     </BrowserRouter>

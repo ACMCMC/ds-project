@@ -71,6 +71,8 @@ contract NotesExchange {
 
     event NotesServiceCompleted(NotesService renting);
 
+    event NotesServiceDelegated(NotesService renting);
+
     // Modifier that checks if the caller is the noteTaker
     modifier onlyNoteTaker(Notes memory note) {
         require(
@@ -216,6 +218,22 @@ contract NotesExchange {
         rentingTotalCount++;
 
         emit NotesServicePending(renting);
+    }
+
+    // Function to abort a renting offer. The fulfiller can abort before fulfilling the service.
+    function delegateNotesService(
+        uint256 rentingId,
+        address newFulfiller
+        )
+        public
+        inState(rentingList[rentingId], State.Pending)
+        onlyFulfiller(rentingList[rentingId])
+    {
+        NotesService storage renting = rentingList[rentingId];
+
+        renting.fulfiller = payable(newFulfiller);
+
+        emit NotesServiceDelegated(renting);
     }
 
     // Function to abort a renting offer. The fulfiller can abort before fulfilling the service.
