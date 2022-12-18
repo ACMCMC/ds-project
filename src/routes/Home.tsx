@@ -5,6 +5,7 @@ import faceIcon from '../face.svg';
 import { Navigate, useNavigate } from 'react-router';
 import ServicesList from '../ServicesList';
 import { Service } from '../Service';
+import logo from '../logo_white.svg';
 
 export default function Home() {
   const [services] = useStore<Map<string, Service>>('services');
@@ -14,13 +15,22 @@ export default function Home() {
   return (
     <div>
       {/* Masthead */}
-      <header className="bg-dark text-white">
-        <div className="container position-relative">
+      <header className="bg-primary text-white">
+        <div className="d-flex flex-column position-relative justify-content-center" style={{ minHeight: "70vh" }}>
           <div className="row justify-content-center">
             <div className="col-xl-6">
               <div className="text-center">
                 {/* Page heading */}
-                <h1 className="my-5">Exchange class notes with other students around the world!</h1>
+                <img src={logo} style={{minHeight: "10vh"}} className="logo" alt="logo" />
+                <h1 className="display-1">NotesExchange</h1>
+              </div>
+            </div>
+          </div>
+          <div className="row justify-content-center">
+            <div className="col-xl-6">
+              <div className="text-center">
+                {/* Page heading */}
+                <h2 className="mt-2 display-6">Exchange class notes with other students around the world!</h2>
               </div>
             </div>
           </div>
@@ -55,13 +65,16 @@ export default function Home() {
         </div>
       </section>
       {/* Image Showcases */}
-      <div className="container col-4 mx-auto pt-5 pb-3">
-          <button className="col-5 btn btn-primary" onClick={() => navigate('/upload')}>Upload my notes</button>
-          <button className="offset-2 col-5 btn btn-primary" onClick={() => navigate('/request-service')}>Request a service</button>
+      <div className='text-center pt-5 pb-2'>
+        <h3>Get started today!</h3>
       </div>
-      <section className="showcase mt-5">
+      <div className="container col-8 col-md-4 mx-auto pb-3">
+        <button className="col-5 btn btn-primary" onClick={() => navigate('/upload')}>Upload my notes</button>
+        <button className="offset-2 col-5 btn btn-primary" onClick={() => navigate('/request-service')}>Request a service</button>
+      </div>
+      <section className="showcase">
         <div className="container-fluid p-5">
-          <h2 className=''>Services I can fulfill</h2>
+          <h2 className=''>All services</h2>
           <ServicesList services={services} />
         </div>
       </section>

@@ -25,7 +25,8 @@ import { parseService, Service, TransactionState } from './Service';
 import FulfillService from './routes/FulfillService';
 import { weiToEth } from './utils';
 
-const NOTES_EXCHANGE_ADDRESS = '0x19EC076684C3f1fF8FBe5b2168476bbFEf2b4411';
+const NOTES_EXCHANGE_ADDRESS = '0xCea88FdAc9dfEC8912d5A4E7E2904e1365B71ad3';
+var listenersReady = false;
 
 const loadBlockchainData = async (setAccount: Function, setNotesExchange: Function, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {
   if (Web3.givenProvider === null) {
@@ -34,10 +35,26 @@ const loadBlockchainData = async (setAccount: Function, setNotesExchange: Functi
   const web3 = new Web3(Web3.givenProvider)
   const accounts = await web3.eth.getAccounts()
   setAccount(accounts[0])
-  console.log('account: ', accounts[0]);
   const notesExchange = new web3.eth.Contract(truffleFile.abi as AbiItem[], NOTES_EXCHANGE_ADDRESS);
   setNotesExchange(notesExchange);
-  const notesCount: number = await notesExchange.methods.getNotesCount().call();
+
+  const allNotes = await notesExchange.methods.getAllNotes().call();
+  const parsedNotes = new Map<string, Note>();
+  for (const rawNote of allNotes) {
+    const parsedNote = parseNote(rawNote);
+    parsedNotes.set(parsedNote.id, parsedNote);
+  }
+  setNotes(parsedNotes);
+
+  const allServices = await notesExchange.methods.getAllServices().call();
+  const parsedServices = new Map<string, Service>();
+  for (const rawService of allServices) {
+    const parsedService = parseService(rawService, parsedNotes);
+    parsedServices.set(parsedService.id, parsedService);
+  }
+  setServices(parsedServices);
+
+  /*const notesCount: number = await notesExchange.methods.getNotesCount().call();
   console.log('There are ' + notesCount + ' notes in the contract.');
   const loadedNotes: Note[] = [];
   for (var i = 0; i < notesCount; i++) {
@@ -80,9 +97,12 @@ const loadBlockchainData = async (setAccount: Function, setNotesExchange: Functi
   console.log('loadedServices: ', loadedServices);
   setServices(
     loadedServices
-  )
+  )*/
 
-  setupListeners(notesExchange, setNotes, notes, setServices, services);
+  if (!listenersReady) {
+    listenersReady = true;
+    setupListeners(notesExchange, setNotes, notes, setServices, services);
+  }
 }
 
 const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {
@@ -116,13 +136,16 @@ const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<
   notesExchange.events.NotesPublished({
   }, updateNote);
 
-  notesExchange.events.NotesServiceCreated({
+  notesExchange.events.NotesServicePending({
   }, updateService);
 
   notesExchange.events.NotesServiceAborted({
   }, updateService);
 
-  notesExchange.events.NotesServiceFulfilled({
+  notesExchange.events.NotesServiceAwaitingAcceptance({
+  }, updateService);
+
+  notesExchange.events.NotesServiceCompleted({
   }, updateService);
 
   notesExchange.events.NotesSold({
@@ -153,7 +176,7 @@ const App = () => {
         <Route path="/upload" element={<UploadNote></UploadNote>} />
         <Route path="/profile" element={<Profile></Profile>} />
         <Route path="/request-service" element={<RequestService></RequestService>} />
-        <Route path="/fulfill-service/:id" loader={(props: any) => <FulfillService service={services.get(props.match.params.id) as Service} />} />
+        <Route path="/fulfill-service" element={<FulfillService></FulfillService>} />
       </Routes>
       <Footer></Footer>
     </BrowserRouter>

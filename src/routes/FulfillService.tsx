@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { useStore } from "react-context-hook";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { useSearchParams } from "react-router-dom";
 import { servicesVersion } from "typescript";
 import { Contract } from "web3-eth-contract";
 import { Note, NoteComponent } from "../Note";
 import { Service, ServiceComponent } from "../Service";
 
-export default function FulfillService({ service } : { service: Service }) {
+export default function FulfillService() {
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [acc] = useStore<string>('account');
   const [notesExchange] = useStore<Contract>('notesExchange');
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
+  const {state} = useLocation();
+  const { id } = state;
+  const service = useStore<Map<string, Service>>('services')[0].get(id) as Service;
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -40,8 +43,11 @@ export default function FulfillService({ service } : { service: Service }) {
     <div className="container-fluid align-items-center">
       <form className="p-5 col-12 col-md-6 mx-auto" onSubmit={e => { handleSubmit(e) }}>
         <h1>Fulfill a service</h1>
-        <ServiceComponent service={service}></ServiceComponent>
-        <p>Good job! When you upload the notes for this service, you will get paid ETH <b>{service.depositedMoney / 2}</b></p>
+        <div className="g-0 border rounded my-3 p-3 bg-light">
+          <ServiceComponent service={service}></ServiceComponent>
+        </div>
+        <p><b>Good job!</b></p>
+        <p>When you upload the notes for this service, the status will become <b>Awaiting Acceptance</b>. When the requester accepts it, you will get the whole price.</p>
         <div className="my-3">
           <label htmlFor="name" className="form-label">Name</label>
           <input type="text" className="form-control" id="name" aria-describedby="nameHelp" onChange={e => setName(e.target.value)} value={name} />

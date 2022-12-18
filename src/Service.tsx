@@ -33,8 +33,7 @@ export type Service = {
 
 export enum TransactionState {
   Pending,
-  Established,
-  WaitingClaim,
+  AwaitingAcceptance,
   Completed,
   Aborted
 }
@@ -43,7 +42,7 @@ export function parseService(originalService: any, notes: Map<string, Note>) {
   const parsedService: Service = {
     ...(originalService as Service),
     notes: originalService.notes ? notes.get(originalService.notes) : undefined,
-    transactionState: TransactionState.Pending,
+    transactionState: parseInt(originalService.transactionState),
     depositedMoney: weiToEth(parseInt(originalService.depositedMoney)),
     deadline: new Date(parseInt(originalService.deadline))
   }
@@ -51,20 +50,39 @@ export function parseService(originalService: any, notes: Map<string, Note>) {
 }
 
 const rejectService = (service: Service, notesExchange: Contract, acc: string) => {
-  notesExchange.methods.buyNotes(service.id).send({ from: acc });
+  notesExchange.methods.rejectService(service.id).send({ from: acc });
+}
+
+const claimRefund = (service: Service, notesExchange: Contract, acc: string) => {
+  notesExchange.methods.claimRefund(service.id).send({ from: acc });
+}
+
+const acceptNotesService = (service: Service, notesExchange: Contract, acc: string) => {
+  notesExchange.methods.acceptNotesService(service.id).send({ from: acc });
+}
+
+const cancelRequestedService = (service: Service, notesExchange: Contract, acc: string) => {
+  notesExchange.methods.cancelRequestedService(service.id).send({ from: acc });
 }
 
 export function ServiceComponent({ service }: { service: Service }) {
   const [acc] = useStore<string>('account');
   const [notesExchange] = useStore<Contract>('notesExchange');
   const navigation = useNavigate();
+  const isCurrentUserFulfiller = service.fulfiller === acc;
+  const isCurrentUserRequester = service.renter === acc;
+  const isDeadlinePassed = service.deadline < new Date();
 
-  //if (note.forBuy) {
   return (
     <div className="card">
       <div className="card-header">
-        {service.id}
-        {service.fulfiller === acc ? <span className="badge text-bg-success ms-3">You provide it</span> : null}
+        Service {service.id}
+        {isCurrentUserFulfiller ? <span className="badge text-bg-info ms-3">You fulfill it</span> : null}
+        {isCurrentUserRequester ? <span className="badge text-bg-info ms-3">You requested it</span> : null}
+        {service.transactionState === TransactionState.Pending ? <span className="badge text-bg-warning ms-3">Pending</span> : null}
+        {service.transactionState === TransactionState.AwaitingAcceptance ? <span className="badge text-bg-info ms-3">Awaiting acceptance</span> : null}
+        {service.transactionState === TransactionState.Completed ? <span className="badge text-bg-success ms-3">Completed</span> : null}
+        {service.transactionState === TransactionState.Aborted ? <span className="badge text-bg-danger ms-3">Aborted</span> : null}
       </div>
       <div className="card-body">
         <div className="d-flex p-0">
@@ -76,15 +94,19 @@ export function ServiceComponent({ service }: { service: Service }) {
             <div className="btn-toolbar" role="toolbar" aria-label="Toolbar">
               <div className="input-group me-2">
                 <div className="input-group-text">Deadline</div>
-                <div className="input-group-text">{service.deadline.toUTCString()}</div>
+                <div className="input-group-text">{service.deadline.toLocaleDateString()}</div>
               </div>
               <div className="input-group me-2">
                 <div className="input-group-text">Price</div>
                 <div className="input-group-text">ETH {service.depositedMoney}</div>
               </div>
               <div className="btn-group" role="group" aria-label="First group">
-                <button className="btn btn-warning position-relative" onClick={() => rejectService(service, notesExchange, acc)} >Reject</button>
-                <button className="btn btn-success position-relative" onClick={() => {navigation('/fulfill-service/' + service.id)}} >Fulfill</button>
+                {isCurrentUserRequester && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => { cancelRequestedService(service, notesExchange, acc) }} disabled={isDeadlinePassed}>Cancel</button> : null}
+                {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => rejectService(service, notesExchange, acc)} disabled={isDeadlinePassed}>Reject</button> : null}
+                {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-success position-relative" onClick={() => { navigation('/fulfill-service', { state: { id: service.id } }) }} disabled={isDeadlinePassed}>Fulfill</button> : null}
+                {isCurrentUserRequester && service.transactionState === TransactionState.Pending ? <button className="btn btn-success position-relative" onClick={() => { claimRefund(service, notesExchange, acc) }} disabled={!isDeadlinePassed}>Claim refund</button> : null}
+                {isCurrentUserRequester && service.transactionState === TransactionState.AwaitingAcceptance ? <button className="btn btn-warning position-relative" onClick={() => { claimRefund(service, notesExchange, acc) }}>Claim refund</button> : null}
+                {isCurrentUserRequester && service.transactionState === TransactionState.AwaitingAcceptance ? <button className="btn btn-success position-relative" onClick={() => { acceptNotesService(service, notesExchange, acc) }}>Accept</button> : null}
               </div>
             </div>
           </div>
@@ -95,27 +117,4 @@ export function ServiceComponent({ service }: { service: Service }) {
       </div>
     </div>
   );
-  /*} else {
-    return (
-      <div className="card text-bg-info m-5">
-        <div className="card-header">
-          {note.uuid}
-        </div>
-        <div className="card-body">
-          <div className="d-flex p-0">
-            <div className="col flex-grow-0 ps-3 pe-4">
-              <img src={noteIcon} className="mx-auto" alt="Notes icon" style={{ height: "auto", width: "auto" }}></img>
-            </div>
-            <div className="col flex-fill">
-              <h5 className="card-title">{note.title}</h5>
-              <p className="card-text">{note.description}</p>
-            </div>
-          </div>
-        </div>
-        <div className="card-footer text-muted">
-          Owner: {note.owner}
-        </div>
-      </div>
-    );
-  }*/
 }

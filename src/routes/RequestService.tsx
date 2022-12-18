@@ -25,7 +25,7 @@ export default function RequestService() {
     // Take day, month and year, and turn it into a Date object
     const deadline: Date = new Date(year, month, day)
 
-    notesExchange.methods.createNotesService(name, deadline.toUTCString(), otherAccount).send({ from: thisAccount, value: ethToWei(price) });
+    notesExchange.methods.createNotesService(name, deadline.getTime(), otherAccount).send({ from: thisAccount, value: ethToWei(price) });
   }
 
   return (

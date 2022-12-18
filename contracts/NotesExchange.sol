@@ -11,17 +11,17 @@ contract NotesExchange {
     uint256 private rentingTotalCount = 0; // The total number of notes that exist
 
     /* Possible states for a renting transaction:
-     *   - Pending: The note taking offer has been created by the noteTaker, but has no renter yet.
-     *   - Aborted: The note taking offer has been aborted by the noteTaker while it was pending.
-     *   - Established: The note taking offer has been accepted by the renter.
-     *   - WaitingClaim: The note taking offer has been completed by the noteTaker, but the renter has not claimed the notes yet.
+     *   - Pending: The note taking offer has been created by the noteTaker, but has not been fulfilled yet.
+     *   - AwaitingAcceptance: The fulfiller has submitted the notes but the requester still has to say that they are good.
      *   - Completed: The note taking offer has been completed by the noteTaker and the renter has claimed the notes.
-     * A buy/sell transaction does not use states. Instead, it is indicated by the forBuy attribute.
+     *   - Aborted: Several possibilities:
+     *     1. The note taking offer has been aborted by the noteTaker while it was pending.
+     *     2. The fulfiller submitted the notes, but they were rejected by the renter. The fulfiller gets 1/2 of the deposit, the renter the other half.
+     *     3. The deadline has passed and the user has requested a refund.
      */
     enum State {
         Pending,
-        Established,
-        WaitingClaim,
+        AwaitingAcceptance,
         Completed,
         Aborted
     }
@@ -41,7 +41,7 @@ contract NotesExchange {
         uint256 id;
         Notes notes;
         State transactionState; // The current state of the renting transaction. Default value: Pending
-        uint256 depositedMoney; // The total money sent. Half of it is the value of the notes.
+        uint256 depositedMoney; // The total money sent. This is the value of the notes.
         address payable renter;
         address payable fulfiller;
         string subject;
@@ -63,11 +63,13 @@ contract NotesExchange {
 
     event NotesPublished(Notes notes);
 
-    event NotesServiceCreated(NotesService renting);
+    event NotesServicePending(NotesService renting);
 
     event NotesServiceAborted(NotesService renting);
 
-    event NotesServiceFulfilled(NotesService renting);
+    event NotesServiceAwaitingAcceptance(NotesService renting);
+
+    event NotesServiceCompleted(NotesService renting);
 
     // Modifier that checks if the caller is the noteTaker
     modifier onlyNoteTaker(Notes memory note) {
@@ -105,6 +107,11 @@ contract NotesExchange {
     constructor() {
         // Establish the owner of the contract
         owner = payable(msg.sender);
+    }
+
+    // Converts Wei to ETH
+    function weiToEth(uint256 weiAmount) public pure returns (uint256) {
+        return weiAmount / 1e18;
     }
 
     // Function to check if an address has bought a note
@@ -210,16 +217,17 @@ contract NotesExchange {
 
         // Add the notes to the list of notes
         rentingList[renting.id] = renting;
-        emit NotesServiceCreated(renting);
+        emit NotesServicePending(renting);
         rentingTotalCount++;
     }
 
     // Function to abort a renting offer. The fulfiller can abort before fulfilling the service.
-    function abortNoteTaking(uint256 rentingId)
+    function rejectService(uint256 rentingId)
         public
         inState(rentingList[rentingId], State.Pending)
+        onlyFulfiller(rentingList[rentingId])
     {
-        NotesService memory renting = rentingList[rentingId];
+        NotesService storage renting = rentingList[rentingId];
 
         // To prevent a re-entrancy attack, the state is changed before sending the money
         renting.transactionState = State.Aborted;
@@ -228,7 +236,67 @@ contract NotesExchange {
         renting.renter.transfer(renting.depositedMoney); // Return the deposit money to the noteTaker
     }
 
-    // Register an address as the renter, store its deposit and change the state of the transaction
+    function cancelRequestedService(uint256 rentingId)
+        private
+        inState(rentingList[rentingId], State.Pending)
+    {
+        NotesService storage renting = rentingList[rentingId];
+        require(
+            renting.renter == payable(msg.sender),
+            "Only the renter can call this function"
+        );
+        // To prevent a re-entrancy attack, the state is changed before sending the money
+        renting.transactionState = State.Aborted;
+        emit NotesServiceAborted(renting);
+
+        renting.renter.transfer(renting.depositedMoney / 2); // Return half the deposit money to the renter
+        renting.fulfiller.transfer(renting.depositedMoney / 2); // Return half the deposit money to the noteTaker
+    }
+
+    // Function to abort a renting offer. The fulfiller can abort before fulfilling the service.
+    function claimRefund(uint256 rentingId) public {
+        NotesService storage renting = rentingList[rentingId];
+        require(
+            renting.renter == payable(msg.sender),
+            "Only the renter can call this function"
+        );
+
+        if (renting.transactionState == State.Pending) {
+            claimRefundDeadlinePassed(renting);
+        } else if (renting.transactionState == State.AwaitingAcceptance) {
+            claimRefundNotAccepted(renting);
+        }
+    }
+
+    function claimRefundDeadlinePassed(NotesService storage renting)
+        private
+        inState(renting, State.Pending)
+    {
+        require(
+            renting.deadline < block.timestamp,
+            "The deadline has not passed yet"
+        );
+
+        // To prevent a re-entrancy attack, the state is changed before sending the money
+        renting.transactionState = State.Aborted;
+        emit NotesServiceAborted(renting);
+
+        renting.renter.transfer(renting.depositedMoney); // Return the deposit money to the renter
+    }
+
+    function claimRefundNotAccepted(NotesService storage renting)
+        private
+        inState(renting, State.AwaitingAcceptance)
+    {
+        // To prevent a re-entrancy attack, the state is changed before sending the money
+        renting.transactionState = State.Aborted;
+        emit NotesServiceAborted(renting);
+
+        renting.renter.transfer(renting.depositedMoney / 2); // Return half the deposit money to the renter
+        renting.fulfiller.transfer(renting.depositedMoney / 2); // Return half the deposit money to the noteTaker
+    }
+
+    // The fulfiller has done its job and is waiting for the noteTaker to accept the service
     function fulfillNotesService(
         uint256 rentingId,
         string memory title,
@@ -240,10 +308,9 @@ contract NotesExchange {
         inState(rentingList[rentingId], State.Pending)
         onlyFulfiller(rentingList[rentingId])
     {
-        NotesService memory renting = rentingList[rentingId];
+        NotesService storage renting = rentingList[rentingId];
 
-        emit NotesServiceFulfilled(renting);
-        renting.transactionState = State.Established;
+        renting.transactionState = State.AwaitingAcceptance;
 
         string memory pdf = Base64.encode(data);
         bytes32 notesHash = keccak256(
@@ -253,17 +320,39 @@ contract NotesExchange {
         // Initialize a new notes struct
         Notes memory newNotes;
         newNotes.forBuy = false;
-        newNotes.notesValue = msg.value;
+        newNotes.notesValue = weiToEth(renting.depositedMoney);
         newNotes.noteTaker = payable(msg.sender);
-        newNotes.owners = new address payable[](1);
-        newNotes.owners[0] = renting.renter;
+        newNotes.owners = new address payable[](0);
         newNotes.id = notesTotalCount;
         newNotes.notesHash = notesHash;
+        newNotes.title = title;
+        newNotes.description = description;
 
         // Add the notes to the list of notes
         notesMapping[newNotes.id] = newNotes;
         emit NotesPublished(newNotes);
         notesTotalCount++;
+
+        renting.notes = newNotes;
+        emit NotesServiceAwaitingAcceptance(renting);
+    }
+
+    function acceptNotesService(uint256 rentingId)
+        public
+        inState(rentingList[rentingId], State.AwaitingAcceptance)
+    {
+        NotesService storage renting = rentingList[rentingId];
+        require(
+            renting.renter == payable(msg.sender),
+            "Only the renter can call this function"
+        );
+
+        // To prevent a re-entrancy attack, the state is changed before sending the money
+        renting.transactionState = State.Completed;
+        emit NotesServiceCompleted(renting);
+
+        renting.fulfiller.transfer(renting.depositedMoney); // Send the deposit money to the noteTaker
+        renting.notes.owners[0] = renting.renter; // Set the noteTaker as the owner of the notes
     }
 
     // Get the balance of the contract
@@ -322,41 +411,37 @@ contract NotesExchange {
         return myNotes;
     }
 
+    // Get all notes
+    function getAllNotes() public view returns (Notes[] memory) {
+        Notes[] memory allNotes = new Notes[](notesTotalCount);
+        for (uint256 i = 0; i < notesTotalCount; i++) {
+            allNotes[i] = notesMapping[i];
+        }
+        return allNotes;
+    }
+
+    // Get all services
+    function getAllServices() public view returns (NotesService[] memory) {
+        NotesService[] memory allServs = new NotesService[](rentingTotalCount);
+        for (uint256 i = 0; i < rentingTotalCount; i++) {
+            allServs[i] = rentingList[i];
+        }
+        return allServs;
+    }
+
     // Get the total number of notes
     function getNotesCount() public view returns (uint256) {
         return notesTotalCount;
     }
 
     // Get the details of a note
-    function getNote(uint256 notesId)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            address,
-            address[] memory,
-            bool,
-            bytes32,
-            string memory,
-            string memory
-        )
-    {
+    function getNote(uint256 notesId) public view returns (Notes memory) {
         Notes memory notes = notesMapping[notesId];
         address[] memory owners; // We need to cast this
-        for (uint i = 0; i < notes.owners.length; i++) {
+        for (uint256 i = 0; i < notes.owners.length; i++) {
             owners[i] = notes.owners[i];
         }
-        return (
-            notes.id,
-            notes.notesValue,
-            notes.noteTaker,
-            owners,
-            notes.forBuy,
-            notes.notesHash,
-            notes.title,
-            notes.description
-        );
+        return (notes);
     }
 
     // Get the total number of notes
@@ -368,27 +453,9 @@ contract NotesExchange {
     function getService(uint256 rentingId)
         public
         view
-        returns (
-            uint256,
-            uint256,
-            State,
-            uint256,
-            address,
-            address,
-            string memory,
-            uint256
-        )
+        returns (NotesService memory)
     {
         NotesService memory renting = rentingList[rentingId];
-        return (
-            renting.id,
-            renting.notes.id,
-            renting.transactionState,
-            renting.depositedMoney,
-            renting.renter,
-            renting.fulfiller,
-            renting.subject,
-            renting.deadline
-        );
+        return (renting);
     }
 }
