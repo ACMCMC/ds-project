@@ -1,0 +1,10 @@
+$font-family-monospace:  'Chivo Mono', 'monospace';
+$font-family-base:       $font-family-monospace !default;
+
+body {
+  font-variant-ligatures: none;
+}
+
+@import './variables';
+
+@import 'bootstrap/scss/bootstrap.scss';

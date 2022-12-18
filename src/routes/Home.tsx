@@ -12,6 +12,8 @@ export default function Home() {
   const [notes] = useStore<Map<string, Note>>('notes');
   const navigate = useNavigate();
 
+  console.log('BHFZERBHJZE')
+
   return (
     <div>
       {/* Masthead */}
@@ -38,7 +40,7 @@ export default function Home() {
       </header>
       {/* Icons Grid */}
       <section className="features-icons bg-light text-center">
-        <div className="container pt-4 pb-3">
+        <div className="container pt-5 pb-4">
           <div className="row">
             <div className="col-lg-4">
               <div className="features-icons-item mx-auto mb-5 mb-lg-0 mb-lg-3">
@@ -65,10 +67,10 @@ export default function Home() {
         </div>
       </section>
       {/* Image Showcases */}
-      <div className='text-center pt-5 pb-2'>
+      <div className='text-center pt-5 pb-4'>
         <h3>Get started today!</h3>
       </div>
-      <div className="container col-8 col-md-4 mx-auto pb-3">
+      <div className="container col-8 col-md-6 mx-auto pb-3">
         <button className="col-5 btn btn-primary" onClick={() => navigate('/upload')}>Upload my notes</button>
         <button className="offset-2 col-5 btn btn-primary" onClick={() => navigate('/request-service')}>Request a service</button>
       </div>

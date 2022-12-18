@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="footer bg-light">
+    <footer className="footer bg-light py-3">
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-lg-6 h-100 text-center text-lg-start my-auto">
@@ -13,7 +13,7 @@ export default function Footer() {
                   <li className="list-inline-item">⋅</li>
                   <li className="list-inline-item"><a href="#!">Privacy Policy</a></li>
     </ul>*/}
-            <p className="text-muted small mb-4 mb-lg-0">&copy; NotesExchange, 2022. All Rights Reserved.</p>
+            <p className="text-muted small mb-4 mb-lg-0">&copy; Xiana Carrera & Aldan Creo, 2022. This is a demonstration site.</p>
           </div>
           <div className="col-lg-6 h-100 text-center text-lg-end my-auto">
             <ul className="list-inline mb-0">

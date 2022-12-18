@@ -24,8 +24,8 @@ export default function NotesList(props: NotesListProps) {
 
   return (
     <>
-      {notesList.map((note, key) =>
-        <div className="my-4" key={key}>
+      {notesList.map((note) =>
+        <div className="my-4" key={note.id}>
           <NoteComponent note={note}></NoteComponent>
         </div>
       )}

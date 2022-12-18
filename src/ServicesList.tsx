@@ -21,8 +21,8 @@ export default function ServicesList({ services }: { services: Map<string, Servi
 
   return (
     <>
-      {servicesList.map((serv, key) =>
-        <div className="py-3" key={key}>
+      {servicesList.map((serv) =>
+        <div className="py-3" key={serv.id}>
           <ServiceComponent service={serv}></ServiceComponent>
         </div>
       )}

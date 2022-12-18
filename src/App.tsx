@@ -1,34 +1,28 @@
-import { Component, StrictMode, useEffect } from 'react';
+import { Component, StrictMode, useEffect, useRef } from 'react';
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
 import { AbiItem } from 'web3-utils';
 import './App.css';
 import { Note, parseNote } from './Note';
-import NotesList from './NotesList';
 import truffleFile from './NotesExchange.json';
 import NavBar from './NavBar';
 import Footer from './footer';
 import {
   BrowserRouter,
-  createBrowserRouter,
   Route,
   Routes,
-  RouterProvider,
 } from "react-router-dom";
-import ReactDOM from "react-dom/client";
 import Home from './routes/Home';
 import { withStore, useStore } from 'react-context-hook';
 import UploadNote from './routes/UploadNote';
 import Profile from './routes/Profile';
 import RequestService from './routes/RequestService';
-import { parseService, Service, TransactionState } from './Service';
+import { parseService, Service } from './Service';
 import FulfillService from './routes/FulfillService';
-import { weiToEth } from './utils';
 
 const NOTES_EXCHANGE_ADDRESS = truffleFile.networks[5777].address;
-var listenersReady = false;
 
-const loadBlockchainData = async (setAccount: Function, setNotesExchange: Function, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {
+const loadBlockchainData = async (setAccount: Function, setNotesExchange: Function, setNotes: Function, setServices: Function) => {
   if (Web3.givenProvider === null) {
     return;
   }
@@ -53,120 +47,81 @@ const loadBlockchainData = async (setAccount: Function, setNotesExchange: Functi
     parsedServices.set(parsedService.id, parsedService);
   }
   setServices(parsedServices);
-
-  /*const notesCount: number = await notesExchange.methods.getNotesCount().call();
-  console.log('There are ' + notesCount + ' notes in the contract.');
-  const loadedNotes: Note[] = [];
-  for (var i = 0; i < notesCount; i++) {
-    const rawNote = await notesExchange.methods.getNote(i).call();
-    const parsedNote: Note = {
-      id: rawNote[0],
-      notesValue: rawNote[1],
-      noteTaker: rawNote[2],
-      owners: rawNote[3],
-      forBuy: rawNote[4],
-      notesHash: rawNote[5],
-      title: rawNote[6],
-      description: rawNote[7]
-    }
-    loadedNotes.push(parseNote(parsedNote))
-  }
-  console.log('loadedNotes: ', loadedNotes);
-  setNotes(
-    loadedNotes
-  )
-
-  const servicesCount: number = await notesExchange.methods.getServicesCount().call();
-  console.log('There are ' + servicesCount + ' services in the contract.');
-  const loadedServices: Service[] = [];
-  for (var i = 0; i < servicesCount; i++) {
-    const rawService = await notesExchange.methods.getService(i).call()
-    console.log(rawService)
-    const parsedService: Service = {
-      id: rawService[0],
-      notes: rawService[1],
-      transactionState: rawService[2],
-      depositedMoney: rawService[3],
-      renter: rawService[4],
-      fulfiller: rawService[5],
-      subject: rawService[6],
-      deadline: rawService[7]
-    }
-    loadedServices.push(parseService(parsedService, notes));
-  }
-  console.log('loadedServices: ', loadedServices);
-  setServices(
-    loadedServices
-  )*/
-
-  if (!listenersReady) {
-    listenersReady = true;
-    setupListeners(notesExchange, setNotes, notes, setServices, services);
-  }
 }
 
-const setupListeners = (notesExchange: Contract, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {
-  console.log('Setting up listeners...');
-
-  const getNotesMap = (notesList: Note[]) => {
-    const map = new Map<string, Note>();
-    for (var i = 0; i < notesList.length; i++) {
-      map.set(notesList[i].id, notesList[i]);
-    }
-
-    return map;
-  }
+const setupListeners = (notesExchange: Contract, useRef: React.MutableRefObject<{
+  notes: Map<string, Note>;
+  services: Map<string, Service>;
+}>, setNotes: Function, setServices: Function) => {
+  let subscriptions: any[] = [];
 
   const updateNote = (error: Error, event: any) => {
     console.log('event: ', event);
     const publishedNote: Note = event.returnValues.notes;
-    const newNotes = notes;
+    // Create a copy of the map
+    const newNotes = new Map<string, Note>(useRef.current.notes);
     newNotes.set(publishedNote.id, parseNote(publishedNote));
     setNotes(newNotes);
   }
 
   const updateService = (error: Error, event: any) => {
-    console.log('event: ', event);
+    console.log('Event: ', event);
     const publishedService: Service = event.returnValues.renting;
-    const newServices = services;
-    newServices.set(publishedService.id, parseService(publishedService, notes));
+    // Create a copy of the map
+    const newServices = new Map<string, Service>(useRef.current.services);
+    newServices.set(publishedService.id, parseService(publishedService, useRef.current.notes));
     setServices(newServices);
   }
 
-  notesExchange.events.NotesPublished({
-  }, updateNote);
+  subscriptions.push(notesExchange.events.NotesPublished({
+  }, updateNote));
 
-  notesExchange.events.NotesServicePending({
-  }, updateService);
+  subscriptions.push(notesExchange.events.NotesServicePending({
+  }, updateService));
 
-  notesExchange.events.NotesServiceAborted({
-  }, updateService);
+  subscriptions.push(notesExchange.events.NotesServiceAborted({
+  }, updateService));
 
-  notesExchange.events.NotesServiceAwaitingAcceptance({
-  }, updateService);
+  subscriptions.push(notesExchange.events.NotesServiceAwaitingAcceptance({
+  }, updateService));
 
-  notesExchange.events.NotesServiceCompleted({
-  }, updateService);
+  subscriptions.push(notesExchange.events.NotesServiceCompleted({
+  }, updateService));
 
-  notesExchange.events.NotesSold({
-  }, updateNote);
+  subscriptions.push(notesExchange.events.NotesSold({
+  }, updateNote));
 
-  notesExchange.events.NotesForSaleEnabled({
-  }, updateNote);
+  subscriptions.push(notesExchange.events.NotesForSaleEnabled({
+  }, updateNote));
 
-  notesExchange.events.NotesForSaleDisabled({
-  }, updateNote);
+  subscriptions.push(notesExchange.events.NotesForSaleDisabled({
+  }, updateNote));
+
+  console.log('Subscriptions: ', subscriptions);
 }
 
 const App = () => {
   const [account, setAccount] = useStore<string>('account');
-  const [notes, setNotes] = useStore<Map<string, Note>>('notes');
+  const [notes, setNotes] = useStore<Map<string, Note>>('notes'); // [state, setState
   const [services, setServices] = useStore<Map<string, Service>>('services');
-  const [notesExchange, setNotesExchange] = useStore('notesExchange');
+  const [notesExchange, setNotesExchange] = useStore<Contract>('notesExchange');
+  const stateRef = useRef<{ notes: Map<string, Note>, services: Map<string, Service> }>() as React.MutableRefObject<{
+    notes: Map<string, Note>;
+    services: Map<string, Service>;
+  }>;
+
+  stateRef.current = { notes, services };
 
   useEffect(() => {
-    loadBlockchainData(setAccount, setNotesExchange, setNotes, notes, setServices, services);
+    loadBlockchainData(setAccount, setNotesExchange, setNotes, setServices);
   }, []);
+
+  useEffect(() => {
+    if (notesExchange) {
+      setupListeners(notesExchange, stateRef, setNotes, setServices);
+    }
+  }, [notesExchange]);
+
 
   return (
     <BrowserRouter>
