@@ -230,6 +230,10 @@ contract NotesExchange {
         onlyFulfiller(rentingList[rentingId])
     {
         NotesService storage renting = rentingList[rentingId];
+        require(
+            renting.deadline > (block.timestamp * 1000), // Convert seconds to milliseconds (block.timestamp)
+            "The deadline has passed"
+        );
 
         renting.fulfiller = payable(newFulfiller);
 

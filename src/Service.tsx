@@ -5,21 +5,6 @@ import { Note } from './Note';
 import serviceIcon from './service.svg';
 import { weiToEth } from './utils';
 
-/*
-From Contract:
-
-    struct NotesService {
-        uint256 id;
-        Notes notes;
-        State transactionState; // The current state of the renting transaction. Default value: Pending
-        uint256 depositedMoney; // The total money sent. Half of it is the value of the notes.
-        address payable renter;
-        address payable fulfiller;
-        string subject;
-        uint deadline; // The deadline for the note taker to complete the transaction
-    }
-*/
-
 export type Service = {
   id: string,
   notes?: Note,
@@ -104,9 +89,9 @@ export function ServiceComponent({ service }: { service: Service }) {
             <div className="btn-toolbar mt-2" role="toolbar" aria-label="Toolbar">
               <div className="btn-group" role="group" aria-label="First group">
                 {isCurrentUserRequester && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => { cancelRequestedService(service, notesExchange, acc) }} disabled={isDeadlinePassed}>Cancel</button> : null}
-                {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => rejectService(service, notesExchange, acc)} disabled={isDeadlinePassed}>Reject</button> : null}
+                {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => rejectService(service, notesExchange, acc)}>Reject</button> : null}
                 {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => navigation('/delegate-service', { state: { id: service.id } }) } disabled={isDeadlinePassed}>Delegate</button> : null}
-                {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-success position-relative" onClick={() => { navigation('/fulfill-service', { state: { id: service.id } }) }} disabled={isDeadlinePassed}>Fulfill</button> : null}
+                {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-success position-relative" onClick={() => { navigation('/fulfill-service', { state: { id: service.id } }) }}>Fulfill</button> : null}
                 {isCurrentUserRequester && service.transactionState === TransactionState.Pending ? <button className="btn btn-success position-relative" onClick={() => { claimRefund(service, notesExchange, acc) }} disabled={!isDeadlinePassed}>Claim refund</button> : null}
                 {isCurrentUserRequester && service.transactionState === TransactionState.AwaitingAcceptance ? <button className="btn btn-warning position-relative" onClick={() => { claimRefund(service, notesExchange, acc) }}>Claim refund</button> : null}
                 {isCurrentUserRequester && service.transactionState === TransactionState.AwaitingAcceptance ? <button className="btn btn-success position-relative" onClick={() => { acceptNotesService(service, notesExchange, acc) }}>Accept</button> : null}

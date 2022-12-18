@@ -3,21 +3,6 @@ import { Contract } from 'web3-eth-contract';
 import noteIcon from './note.svg';
 import { ethToWei } from './utils';
 
-/*
-From Contract:
-
-    struct Notes {
-        uint256 id; // Or use the hash?
-        uint256 notesValue; // The value of the notes.
-        address payable noteTaker; // The address of the note taker
-        address payable[] owners; // The address of the people who have purchased the notes
-        bool forBuy; // Indicates if the notes are for sale or for renting
-        bytes32 notesHash; // The hash of the notes
-        string title;
-        string description;
-    }   
-*/
-
 export type Note = {
   id: string
   notesValue: number
