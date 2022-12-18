@@ -14,7 +14,7 @@ export default function Profile() {
   // Filter the notes map to only include the notes that the user owns
   const userNotesMap = new Map<string, Note>();
   for (var [key, note] of Array.from(notes.entries())) {
-    if (note.noteTaker === acc) {
+    if (note.noteTaker === acc || note.owners.includes(acc)) {
       userNotesMap.set(key, note);
     }
   }
@@ -32,16 +32,16 @@ export default function Profile() {
   }
 
   return (
-    <div className="container-fluid align-items-center">
-      <div className="p-5 col-12 col-md-6 mx-auto">
+    <div className="container-fluid align-items-center ">
+      <div className="p-5 col-12 col-md-6 mx-auto g-0 border rounded my-5 p-5">
         <h1>Profile</h1>
         <h3>Account</h3>
           <p>{acc}</p>
-        <h3>Notes</h3>
+        <h3 className="mt-5">My notes</h3>
         <NotesList notes={userNotesMap}></NotesList>
-        <h3>Services I requested</h3>
+        <h3 className="mt-5">Services I requested</h3>
         <ServicesList services={userRequesterServicesMap}></ServicesList>
-        <h3>Services I fulfill</h3>
+        <h3 className="mt-5">Services I fulfill</h3>
         <ServicesList services={userFulfillerServicesMap}></ServicesList>
       </div>
     </div>

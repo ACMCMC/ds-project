@@ -59,8 +59,8 @@ export function NoteComponent({ note }: { note: Note }) {
   return (
     <div className="card">
       <div className="card-header">
-        Note {note.id}
-        {owns ? <span className="badge text-bg-info ms-3">Yours</span> : null}
+        Notes {note.id}
+        {owns ? <span className="badge text-bg-info ms-3">You wrote them</span> : null}
       </div>
       <div className="card-body">
         <div className="d-flex p-0">
@@ -76,11 +76,11 @@ export function NoteComponent({ note }: { note: Note }) {
                 <div className="input-group-text">ETH {note.notesValue}</div>
               </div>
               <div className="btn-group" role="group" aria-label="First group">
+                {owns && note.forBuy ? <button className="btn btn-secondary" onClick={() => disableSelling(note, notesExchange, acc)}>Disable selling</button> : null}
+                {owns && !note.forBuy ? <button className="btn btn-warning" onClick={() => enableSelling(note, notesExchange, acc)}>Enable selling</button> : null}
                 <button className="btn btn-primary position-relative" onClick={() => buyNote(note, notesExchange, acc)} disabled={bought || !note.forBuy}>Buy
                   {bought ? <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">Bought</span> : null}
                 </button>
-                {owns && note.forBuy ? <button className="btn btn-secondary" onClick={() => disableSelling(note, notesExchange, acc)}>Disable selling</button> : null}
-                {owns && !note.forBuy ? <button className="btn btn-danger" onClick={() => enableSelling(note, notesExchange, acc)}>Enable selling</button> : null}
               </div>
             </div>
           </div>

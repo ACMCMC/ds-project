@@ -25,7 +25,7 @@ import { parseService, Service, TransactionState } from './Service';
 import FulfillService from './routes/FulfillService';
 import { weiToEth } from './utils';
 
-const NOTES_EXCHANGE_ADDRESS = '0xCea88FdAc9dfEC8912d5A4E7E2904e1365B71ad3';
+const NOTES_EXCHANGE_ADDRESS = truffleFile.networks[5777].address;
 var listenersReady = false;
 
 const loadBlockchainData = async (setAccount: Function, setNotesExchange: Function, setNotes: Function, notes: Map<string, Note>, setServices: Function, services: Map<string, Service>) => {

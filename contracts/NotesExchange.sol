@@ -174,8 +174,9 @@ contract NotesExchange {
 
         // Add the notes to the list of notes
         notesMapping[newNotes.id] = newNotes;
-        emit NotesPublished(newNotes);
         notesTotalCount++;
+
+        emit NotesPublished(newNotes);
     }
 
     function enableNotesForSale(uint256 notesId)
@@ -200,11 +201,6 @@ contract NotesExchange {
         uint256 deadline,
         address fulfiller
     ) public payable {
-        require(
-            msg.value % 2 == 0,
-            "The deposit must be double the notes value"
-        );
-
         // Initialize a new notes struct
         NotesService memory renting;
         renting.deadline = deadline;
@@ -217,8 +213,9 @@ contract NotesExchange {
 
         // Add the notes to the list of notes
         rentingList[renting.id] = renting;
-        emit NotesServicePending(renting);
         rentingTotalCount++;
+
+        emit NotesServicePending(renting);
     }
 
     // Function to abort a renting offer. The fulfiller can abort before fulfilling the service.
@@ -231,13 +228,14 @@ contract NotesExchange {
 
         // To prevent a re-entrancy attack, the state is changed before sending the money
         renting.transactionState = State.Aborted;
-        emit NotesServiceAborted(renting);
 
-        renting.renter.transfer(renting.depositedMoney); // Return the deposit money to the noteTaker
+        renting.renter.transfer(renting.depositedMoney); // Return the deposit money to the renter
+
+        emit NotesServiceAborted(renting);
     }
 
     function cancelRequestedService(uint256 rentingId)
-        private
+        public
         inState(rentingList[rentingId], State.Pending)
     {
         NotesService storage renting = rentingList[rentingId];
@@ -247,10 +245,11 @@ contract NotesExchange {
         );
         // To prevent a re-entrancy attack, the state is changed before sending the money
         renting.transactionState = State.Aborted;
-        emit NotesServiceAborted(renting);
 
-        renting.renter.transfer(renting.depositedMoney / 2); // Return half the deposit money to the renter
-        renting.fulfiller.transfer(renting.depositedMoney / 2); // Return half the deposit money to the noteTaker
+        renting.renter.transfer((renting.depositedMoney * 3) / 4); // Return 3/4 of the deposit money to the renter
+        renting.fulfiller.transfer((renting.depositedMoney) / 4); // Return 1/4 of the deposit money to the noteTaker
+
+        emit NotesServiceAborted(renting);
     }
 
     // Function to abort a renting offer. The fulfiller can abort before fulfilling the service.
@@ -265,6 +264,8 @@ contract NotesExchange {
             claimRefundDeadlinePassed(renting);
         } else if (renting.transactionState == State.AwaitingAcceptance) {
             claimRefundNotAccepted(renting);
+        } else {
+            revert(); // The transaction is not in a state where a refund can be claimed
         }
     }
 
@@ -279,9 +280,10 @@ contract NotesExchange {
 
         // To prevent a re-entrancy attack, the state is changed before sending the money
         renting.transactionState = State.Aborted;
-        emit NotesServiceAborted(renting);
 
         renting.renter.transfer(renting.depositedMoney); // Return the deposit money to the renter
+
+        emit NotesServiceAborted(renting);
     }
 
     function claimRefundNotAccepted(NotesService storage renting)
@@ -290,10 +292,11 @@ contract NotesExchange {
     {
         // To prevent a re-entrancy attack, the state is changed before sending the money
         renting.transactionState = State.Aborted;
-        emit NotesServiceAborted(renting);
 
         renting.renter.transfer(renting.depositedMoney / 2); // Return half the deposit money to the renter
         renting.fulfiller.transfer(renting.depositedMoney / 2); // Return half the deposit money to the noteTaker
+
+        emit NotesServiceAborted(renting);
     }
 
     // The fulfiller has done its job and is waiting for the noteTaker to accept the service
@@ -330,10 +333,11 @@ contract NotesExchange {
 
         // Add the notes to the list of notes
         notesMapping[newNotes.id] = newNotes;
-        emit NotesPublished(newNotes);
         notesTotalCount++;
 
         renting.notes = newNotes;
+
+        emit NotesPublished(newNotes);
         emit NotesServiceAwaitingAcceptance(renting);
     }
 
@@ -349,10 +353,11 @@ contract NotesExchange {
 
         // To prevent a re-entrancy attack, the state is changed before sending the money
         renting.transactionState = State.Completed;
-        emit NotesServiceCompleted(renting);
 
         renting.fulfiller.transfer(renting.depositedMoney); // Send the deposit money to the noteTaker
         renting.notes.owners[0] = renting.renter; // Set the noteTaker as the owner of the notes
+
+        emit NotesServiceCompleted(renting);
     }
 
     // Get the balance of the contract

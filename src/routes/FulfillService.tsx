@@ -41,7 +41,7 @@ export default function FulfillService() {
 
   return (
     <div className="container-fluid align-items-center">
-      <form className="p-5 col-12 col-md-6 mx-auto" onSubmit={e => { handleSubmit(e) }}>
+      <form className="p-5 col-12 col-md-6 mx-auto g-0 border rounded my-5 p-5" onSubmit={e => { handleSubmit(e) }}>
         <h1>Fulfill a service</h1>
         <div className="g-0 border rounded my-3 p-3 bg-light">
           <ServiceComponent service={service}></ServiceComponent>

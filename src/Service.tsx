@@ -77,8 +77,8 @@ export function ServiceComponent({ service }: { service: Service }) {
     <div className="card">
       <div className="card-header">
         Service {service.id}
-        {isCurrentUserFulfiller ? <span className="badge text-bg-info ms-3">You fulfill it</span> : null}
         {isCurrentUserRequester ? <span className="badge text-bg-info ms-3">You requested it</span> : null}
+        {isCurrentUserFulfiller ? <span className="badge text-bg-info ms-3">You fulfill it</span> : null}
         {service.transactionState === TransactionState.Pending ? <span className="badge text-bg-warning ms-3">Pending</span> : null}
         {service.transactionState === TransactionState.AwaitingAcceptance ? <span className="badge text-bg-info ms-3">Awaiting acceptance</span> : null}
         {service.transactionState === TransactionState.Completed ? <span className="badge text-bg-success ms-3">Completed</span> : null}
@@ -91,7 +91,7 @@ export function ServiceComponent({ service }: { service: Service }) {
           </div>
           <div className="col flex-fill">
             <h5 className="card-title">{service.subject}</h5>
-            <div className="btn-toolbar" role="toolbar" aria-label="Toolbar">
+            <div className="btn-toolbar mt-4" role="toolbar" aria-label="Toolbar">
               <div className="input-group me-2">
                 <div className="input-group-text">Deadline</div>
                 <div className="input-group-text">{service.deadline.toLocaleDateString()}</div>
@@ -100,6 +100,8 @@ export function ServiceComponent({ service }: { service: Service }) {
                 <div className="input-group-text">Price</div>
                 <div className="input-group-text">ETH {service.depositedMoney}</div>
               </div>
+            </div>
+            <div className="btn-toolbar mt-2" role="toolbar" aria-label="Toolbar">
               <div className="btn-group" role="group" aria-label="First group">
                 {isCurrentUserRequester && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => { cancelRequestedService(service, notesExchange, acc) }} disabled={isDeadlinePassed}>Cancel</button> : null}
                 {isCurrentUserFulfiller && service.transactionState === TransactionState.Pending ? <button className="btn btn-warning position-relative" onClick={() => rejectService(service, notesExchange, acc)} disabled={isDeadlinePassed}>Reject</button> : null}
@@ -114,6 +116,9 @@ export function ServiceComponent({ service }: { service: Service }) {
       </div>
       <div className="card-footer text-muted">
         Requester: {service.renter}
+      </div>
+      <div className="card-footer text-muted">
+        Fulfiller: {service.fulfiller}
       </div>
     </div>
   );

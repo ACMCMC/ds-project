@@ -18,7 +18,7 @@ export default function Home() {
       <header className="bg-primary text-white">
         <div className="d-flex flex-column position-relative justify-content-center" style={{ minHeight: "70vh" }}>
           <div className="row justify-content-center">
-            <div className="col-xl-6">
+            <div className="col-10 col-md-6">
               <div className="text-center">
                 {/* Page heading */}
                 <img src={logo} style={{minHeight: "10vh"}} className="logo" alt="logo" />
@@ -27,7 +27,7 @@ export default function Home() {
             </div>
           </div>
           <div className="row justify-content-center">
-            <div className="col-xl-6">
+            <div className="col-10 col-md-6">
               <div className="text-center">
                 {/* Page heading */}
                 <h2 className="mt-2 display-6">Exchange class notes with other students around the world!</h2>

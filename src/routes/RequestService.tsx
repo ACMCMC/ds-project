@@ -30,7 +30,7 @@ export default function RequestService() {
 
   return (
     <div className="container-fluid align-items-center">
-      <form className="p-5 col-12 col-md-6 mx-auto" onSubmit={e => { handleSubmit(e) }}>
+      <form className="p-5 col-12 col-md-6 mx-auto g-0 border rounded my-5 p-5" onSubmit={e => { handleSubmit(e) }}>
         <h1>Request a service</h1>
         <div className="my-3">
           <label htmlFor="name" className="form-label">Subject</label>
