@@ -274,7 +274,7 @@ contract NotesExchange {
         inState(renting, State.Pending)
     {
         require(
-            renting.deadline < block.timestamp,
+            renting.deadline < (block.timestamp * 1000), // Convert seconds to milliseconds (block.timestamp)
             "The deadline has not passed yet"
         );
 
@@ -355,7 +355,7 @@ contract NotesExchange {
         renting.transactionState = State.Completed;
 
         renting.fulfiller.transfer(renting.depositedMoney); // Send the deposit money to the noteTaker
-        renting.notes.owners[0] = renting.renter; // Set the noteTaker as the owner of the notes
+        renting.notes.owners.push(renting.renter); // Set the noteTaker as the owner of the notes
 
         emit NotesServiceCompleted(renting);
     }
